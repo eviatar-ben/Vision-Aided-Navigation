@@ -34,7 +34,7 @@ def present(img3):
     cv2.waitKey(0)
 
 
-def print_descriptors(des1, des2):
+def print_first_descriptors(f_des1, f_des2):
     print(f"Image1's first feature descriptor is {des1}")
     print(f"Image2's first feature descriptor is {des2}")
 
@@ -45,4 +45,4 @@ if __name__ == '__main__':
     kp1, des1, kp2, des2, img1, img2 = detect_and_describe(image1, image2)
     image3 = match(kp1, des1, kp2, des2, img1, img2)
     present(image3)
-    print_descriptors(des1, des2)
+    print_first_descriptors(des1[0], des2[0])
