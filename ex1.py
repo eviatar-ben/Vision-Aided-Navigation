@@ -7,6 +7,7 @@ import sys
 IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
 DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
+RATIO = 0.3
 numpy.set_printoptions(threshold=sys.maxsize)
 
 
@@ -61,23 +62,28 @@ def print_descriptors(des1, des2):
 
 
 def analyse_matches(dsc1, dsc2, ratio):
-    two_nn = bf_ncc.knnMatch(dsc1[:500], dsc2[:500], k=2)
+    two_nn = bf_ncc.knnMatch(dsc1, dsc2, k=2)
     passed = 0
     for f, s in two_nn:
         if f.distance / s.distance < ratio:
             passed += 1
-
     return passed
+
+
+def plot_ratios(dsc1, dsc2):
+
+    pass
 
 
 if __name__ == '__main__':
     sift = cv2.SIFT_create()
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    bf_ncc =cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+
+    bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
     image1, image2 = read_images(FIRST_IMAGE)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
     present_key_points(image1, key_points1, image2, key_points2)
-    analyse_matches(descriptor1, descriptor2, 0.3)
+    analyse_matches(descriptor1, descriptor2, RATIO)
     image3 = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
     present_match(image3)
     # print_descriptors(descriptor1[1], descriptor2[1])
