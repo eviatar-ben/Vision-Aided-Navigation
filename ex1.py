@@ -5,7 +5,6 @@ import sys
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 DATA_PATH = r"C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\dataset\sequences\00"
 import matplotlib.pyplot as plt
