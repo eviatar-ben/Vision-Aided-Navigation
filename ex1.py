@@ -4,11 +4,11 @@ import numpy
 import sys
 import numpy as np
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-DATA_PATH = r"C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\dataset\sequences\00"
 
 IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
-# DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
+DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
 RATIO = 0.65  # equalibrium point
 numpy.set_printoptions(threshold=sys.maxsize)
@@ -119,13 +119,6 @@ def plot_ratios(dsc1, dsc2):
     fig.update_yaxes(title_text="<b>Undistinguished noises</b>", secondary_y=True)
     fig.show()
 
-    # px.scatter(x=x, y=y,
-    #            title="Distinguished matches in function of ratio: ",
-    #            labels=dict(x="Ratio", y="Distinguished matches")).show()
-    # px.scatter(x=x, y=z,
-    #            title="Undistinguished matches in function of ratio: ",
-    #            labels=dict(x="Ratio", y="Undistinguished matches")).show()
-
 
 def present_significance_test(kp1, img1, kp2, img2, passed):
     random_matches = random.choices(passed, k=20)
@@ -136,10 +129,7 @@ def present_significance_test(kp1, img1, kp2, img2, passed):
 
 
 if __name__ == '__main__':
-    orb = cv2.ORB_create()
     sift = cv2.SIFT_create()
-    image1, image2 = read_images(FIRST_IMAGE)
-    detect_and_describe(image1, image2)
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 
     bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
