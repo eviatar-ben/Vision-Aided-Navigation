@@ -3,16 +3,14 @@ import cv2
 import numpy
 import sys
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 
 DATA_PATH = r"C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\dataset\sequences\00"
-import matplotlib.pyplot as plt
 
 IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
-DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
+# DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
-RATIO = 0.25  # equalibrium point
+RATIO = 0.65  # equalibrium point
 numpy.set_printoptions(threshold=sys.maxsize)
 
 
@@ -20,15 +18,10 @@ def read_images(idx):
     img_name = '{:06d}.png'.format(idx)
     img1 = cv2.imread(DATA_PATH + 'image_0/' + img_name, 0)
     img2 = cv2.imread(DATA_PATH + 'image_1/' + img_name, 0)
-    # img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-    # img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     return img1, img2
 
 
 def detect_and_describe(img1, img2):
-    kp1, des1 = orb.detectAndCompute(img1, None)
-    kp2, des2 = orb.detectAndCompute(img2, None)
-    return kp1, des1, kp2, des2
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
 
@@ -142,15 +135,10 @@ def present_significance_test(kp1, img1, kp2, img2, passed):
     return img3
 
 
-
-def present(kp1, des1, kp2, des2):
-    pass
-
-
 if __name__ == '__main__':
     orb = cv2.ORB_create()
     sift = cv2.SIFT_create()
-    image1, image2 = read_images()
+    image1, image2 = read_images(FIRST_IMAGE)
     detect_and_describe(image1, image2)
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 
