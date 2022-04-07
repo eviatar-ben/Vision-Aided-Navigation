@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
 DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
+SECOND_IMAGE = 0o00001
 THRESH = 2
+IMG_NUM = 3
 
 ORANGE = (255, 127, 14)
 CYAN = (0, 255, 255)
@@ -150,9 +152,17 @@ def cv2_triangulation():
     return np.squeeze(cv2.convertPointsFromHomogeneous(ps))
 
 
-def present_world_3d_points(points):
+def present_world_3d_points(points, cv2=False):
+    if cv2:
+        algorithm = 'Lecture algorithm'
+    else:
+        algorithm = 'cv2 algorithm'
     p = pd.DataFrame(points)
-    fig = px.scatter_3d(p, x=0, y=1, z=2)
+    fig = px.scatter_3d(p, x=0, y=1, z=2, labels={
+        '0': "X axis",
+        '1': "Y axis",
+        '2': "Z axis"},
+                        title=f'Calculated 3D points yields by linear least squares triangulation ({algorithm})')
     fig.show()
 
 
@@ -182,8 +192,11 @@ if __name__ == '__main__':
     in_liers, out_liers = reject_matches()
     draw_rejected_matches(in_liers, out_liers)
 
-    # 2.3:
+    # 2.3A:
     world_3d_points = triangulation()
     cv2_world_3d_points = cv2_triangulation()
     present_world_3d_points(world_3d_points)
-    present_world_3d_points(cv2_world_3d_points)
+    present_world_3d_points(cv2_world_3d_points, True)
+    # 2.3B:
+    # run line 181 : image1, image2 = read_images(SECOND_IMAGE)
+    # with argument SECOND_IMAGE instead of FIRST_IMAGE
