@@ -2,7 +2,7 @@ import cv2
 import numpy
 import sys
 import numpy as np
-
+import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
 
@@ -91,8 +91,6 @@ def reject_matches():
         else:
             image1_outlyers.append(key_points1[i])
             image2_outlyers.append(key_points2[j])
-    print(len(image1_inliers))
-    print(len(image2_inliers))
 
     return [image1_inliers, image2_inliers], [image1_outlyers, image2_outlyers]
 
@@ -107,9 +105,68 @@ def draw_rejected_matches(inliers, outlyers):
     cv2.imwrite("rec_img_inout.jpg", rec_img_out)
 
 
+def read_cameras():
+    with open(DATA_PATH + 'calib.txt') as f:
+        l1 = f.readline().split()[1:]  # skip first token
+        l2 = f.readline().split()[1:]  # skip first token
+    l1 = [float(i) for i in l1]
+    m1 = np.array(l1).reshape(3, 4)
+    l2 = [float(i) for i in l2]
+    m2 = np.array(l2).reshape(3, 4)
+    k = m1[:, :3]
+    m1 = np.linalg.inv(k) @ m1
+    m2 = np.linalg.inv(k) @ m2
+    return k, m1, m2
+
+
+def triangulation():
+    def compute_homogenates_matrix(p, q):
+        p, q = p.pt, q.pt
+        return np.array([p[0] * m1c[2] - m1c[0],
+                         p[1] * m1c[2] - m1c[1],
+                         q[0] * m2c[2] - m2c[0],
+                         q[1] * m2c[2] - m2c[1]])
+
+    xs = []
+    for i, j in zip(in_liers[0], in_liers[1]):
+        homogenates_matrix = compute_homogenates_matrix(i, j)
+        _, _, vh = np.linalg.svd(homogenates_matrix)
+        last_col = vh[-1]
+        xs.append(last_col[:3] / last_col[3])
+    return np.array(xs)
+
+
+def cv2_triangulation():
+    def edit_to_pt():
+        for i, j in zip(in_liers[0], in_liers[1]):
+            points1.append(i.pt)
+            points2.append(j.pt)
+
+    points1 = []
+    points2 = []
+    edit_to_pt()
+
+    ps = cv2.triangulatePoints(m1c, m2c, np.array(np.array(points1)).T, np.array(np.array(points2)).T).T
+    return np.squeeze(cv2.convertPointsFromHomogeneous(ps))
+
+
+def present_world_3d_points(points):
+    p = pd.DataFrame(points)
+    fig = px.scatter_3d(p, x=0, y=1, z=2)
+    fig.show()
+
+
+def get_camera_mat():
+    k, m1, m2 = read_cameras()
+    m1 = k @ m1
+    m2 = k @ m2
+    return k, m1, m2
+
+
 if __name__ == '__main__':
     sift = cv2.SIFT_create()
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    _, m1c, m2c = get_camera_mat()
 
     image1, image2 = read_images(FIRST_IMAGE)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
@@ -124,3 +181,9 @@ if __name__ == '__main__':
     # 2.2:
     in_liers, out_liers = reject_matches()
     draw_rejected_matches(in_liers, out_liers)
+
+    # 2.3:
+    world_3d_points = triangulation()
+    cv2_world_3d_points = cv2_triangulation()
+    present_world_3d_points(world_3d_points)
+    present_world_3d_points(cv2_world_3d_points)
