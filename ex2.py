@@ -173,30 +173,39 @@ def get_camera_mat():
     return k, m1, m2
 
 
-if __name__ == '__main__':
-    sift = cv2.SIFT_create()
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    _, m1c, m2c = get_camera_mat()
-
-    image1, image2 = read_images(FIRST_IMAGE)
+def get_cloud(img=0):
+    if not img:
+        img = FIRST_IMAGE
+    else:
+        img = SECOND_IMAGE
+    global image1, image2, key_points1, key_points2, matches, in_liers
+    image1, image2 = read_images(img)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
     # present_key_points(image1, key_points1, image2, key_points2)
     image3, matches = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
     # present_match(image3)
     # print_descriptors(descriptor1[1], descriptor2[1])
-
     # 2.1:
     plot_deviation_from_stereo_pattern()
-
     # 2.2:
     in_liers, out_liers = reject_matches()
     draw_rejected_matches(in_liers, out_liers)
-
     # 2.3A:
     world_3d_points = triangulation()
     cv2_world_3d_points = cv2_triangulation()
     present_world_3d_points(world_3d_points)
     present_world_3d_points(cv2_world_3d_points, True)
+
     # 2.3B:
     # run line 181 : image1, image2 = read_images(SECOND_IMAGE)
     # with argument SECOND_IMAGE instead of FIRST_IMAGE
+
+
+if __name__ == '__main__':
+    sift = cv2.SIFT_create()
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    _, m1c, m2c = get_camera_mat()
+
+    get_cloud(0)
+    get_cloud(1)
+
