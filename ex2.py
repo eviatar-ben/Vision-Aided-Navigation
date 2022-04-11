@@ -28,7 +28,7 @@ def read_images(idx):
     return img1, img2
 
 
-def detect_and_describe(img1, img2):
+def detect_and_describe(img1, img2, sift):
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
 
@@ -45,6 +45,7 @@ def present_key_points(img1, kp1, img2, kp2):
 
 
 def match(kp1, des1, kp2, des2, img1, img2):
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
     matches = bf.match(des1, des2)
     sorted_matches = sorted(matches, key=lambda x: x.distance)
     img3 = cv2.drawMatches(img1, kp1, img2, kp2, sorted_matches[:50], img2, flags=2)
@@ -59,7 +60,7 @@ def present_match(img3):
 
 # ex2:
 # -------------------------------------------------------------------------------------------------------------------
-def plot_deviation_from_stereo_pattern():
+def plot_deviation_from_stereo_pattern(matches, key_points1, key_points2):
     matches_i_in_img1 = [m.queryIdx for m in matches]
     matches_i_in_img2 = [m.trainIdx for m in matches]
     deviations = []
@@ -78,7 +79,7 @@ def plot_deviation_from_stereo_pattern():
     print(f"Percentage of matches that deviate by more than 2 pixels: {counter * 100 / len(matches)}")
 
 
-def reject_matches():
+def reject_matches(matches, key_points1, key_points2):
     matches_i_in_img1 = [m.queryIdx for m in matches]
     matches_i_in_img2 = [m.trainIdx for m in matches]
     image1_inliers = []
@@ -97,7 +98,7 @@ def reject_matches():
     return [image1_inliers, image2_inliers], [image1_outlyers, image2_outlyers]
 
 
-def draw_rejected_matches(inliers, outlyers):
+def draw_rejected_matches(image1, image2, inliers, outlyers):
     rec_img_in = cv2.drawMatches(image1, inliers[0], image2, inliers[1], [], flags=cv2.DrawMatchesFlags_DEFAULT,
                                  outImg=None,
                                  singlePointColor=ORANGE)
@@ -121,7 +122,7 @@ def read_cameras():
     return k, m1, m2
 
 
-def triangulation():
+def triangulation(in_liers, m1c, m2c):
     def compute_homogenates_matrix(p, q):
         p, q = p.pt, q.pt
         return np.array([p[0] * m1c[2] - m1c[0],
@@ -138,7 +139,7 @@ def triangulation():
     return np.array(xs)
 
 
-def cv2_triangulation():
+def cv2_triangulation(in_liers, m1c, m2c):
     def edit_to_pt():
         for i, j in zip(in_liers[0], in_liers[1]):
             points1.append(i.pt)
@@ -173,39 +174,53 @@ def get_camera_mat():
     return k, m1, m2
 
 
-def get_cloud(img=0):
-    if not img:
-        img = FIRST_IMAGE
-    else:
-        img = SECOND_IMAGE
-    global image1, image2, key_points1, key_points2, matches, in_liers
-    image1, image2 = read_images(img)
-    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
+def get_cloud(image):
+    sift = cv2.SIFT_create()
+
+    _, m1c, m2c = get_camera_mat()
+
+    image1, image2 = read_images(image)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, sift)
     # present_key_points(image1, key_points1, image2, key_points2)
     image3, matches = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
-    # present_match(image3)
-    # print_descriptors(descriptor1[1], descriptor2[1])
-    # 2.1:
-    plot_deviation_from_stereo_pattern()
     # 2.2:
-    in_liers, out_liers = reject_matches()
-    draw_rejected_matches(in_liers, out_liers)
-    # 2.3A:
-    world_3d_points = triangulation()
-    cv2_world_3d_points = cv2_triangulation()
-    present_world_3d_points(world_3d_points)
-    present_world_3d_points(cv2_world_3d_points, True)
+    in_liers, out_liers = reject_matches(matches, key_points1, key_points2)
+    # draw_rejected_matches(image1, image2, in_liers, out_liers)
 
-    # 2.3B:
-    # run line 181 : image1, image2 = read_images(SECOND_IMAGE)
-    # with argument SECOND_IMAGE instead of FIRST_IMAGE
+    # 2.3A:
+    world_3d_points = triangulation(in_liers, m1c, m2c)
+    # cv2_world_3d_points = cv2_triangulation(in_liers, m1c, m2c)
+    # present_world_3d_points(world_3d_points)
+    # present_world_3d_points(cv2_world_3d_points)
+    return world_3d_points
 
 
 if __name__ == '__main__':
-    sift = cv2.SIFT_create()
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    _, m1c, m2c = get_camera_mat()
-
-    get_cloud(0)
-    get_cloud(1)
-
+    # sift = cv2.SIFT_create()
+    # bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    # _, m1c, m2c = get_camera_mat()
+    #
+    # image1, image2 = read_images(FIRST_IMAGE)
+    # key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
+    # # present_key_points(image1, key_points1, image2, key_points2)
+    # image3, matches = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
+    # # present_match(image3)
+    # # print_descriptors(descriptor1[1], descriptor2[1])
+    #
+    # # 2.1:
+    # plot_deviation_from_stereo_pattern(matches, key_points1, key_points2)
+    #
+    # # 2.2:
+    # in_liers, out_liers = reject_matches()
+    # draw_rejected_matches(in_liers, out_liers)
+    #
+    # # 2.3A:
+    # world_3d_points = triangulation()
+    # cv2_world_3d_points = cv2_triangulation()
+    # present_world_3d_points(world_3d_points)
+    # present_world_3d_points(cv2_world_3d_points, True)
+    # 2.3B:
+    # run line 181 : image1, image2 = read_images(SECOND_IMAGE)
+    # with argument SECOND_IMAGE instead of FIRST_IMAGE
+    get_cloud(FIRST_IMAGE)
+    get_cloud(SECOND_IMAGE)
