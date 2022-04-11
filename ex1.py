@@ -6,12 +6,15 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
 IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
 DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
 RATIO = 0.65  # equalibrium point
 numpy.set_printoptions(threshold=sys.maxsize)
+
+sift = cv2.SIFT_create()
+bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
 
 
 def read_images(idx):
@@ -61,7 +64,7 @@ def print_descriptors(des1, des2):
     print(f"Image2's second feature descriptor is:\n {des2}")
 
 
-def analyse_matches(query_descriptors, train_descriptors, factor, plot=False):
+def significance_test_match(query_descriptors, train_descriptors, factor, plot=False):
     """
     lowe's-ratio-test-work :
     1. If the "good" match can't be distinguished from noise (second match),
@@ -100,7 +103,7 @@ def plot_ratios(dsc1, dsc2):
     y = []
     z = []
     for f in x:
-        filtered = analyse_matches(dsc1, dsc2, f)[0]
+        filtered = significance_test_match(dsc1, dsc2, f)[0]
         y.append(filtered)
         z.append(len(dsc1) - filtered)
 
@@ -128,17 +131,42 @@ def present_significance_test(kp1, img1, kp2, img2, passed):
     return img3
 
 
-if __name__ == '__main__':
-    sift = cv2.SIFT_create()
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+# ----------------------------------------------------------------------------------------------------------------------
+# ex3 utils:
+def get_matches_by_significance_test(img):
+    image1, image2 = read_images(img)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
+    # present_key_points(image1, key_points1, image2, key_points2)
+    # plot_ratios(descriptor1, descriptor2)
+    # print_descriptors(descriptor1[1], descriptor2[1])
+    filtered_amount, passed_kp, failed_kp = significance_test_match(descriptor1, descriptor2, RATIO, plot=True)
+    # present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
+    return passed_kp
 
-    bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-    image1, image2 = read_images(FIRST_IMAGE)
+
+def brute_force_match(img):
+    image1, image2 = read_images(img)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
     present_key_points(image1, key_points1, image2, key_points2)
     # plot_ratios(descriptor1, descriptor2)
     image3 = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
     # present_match(image3)
     # print_descriptors(descriptor1[1], descriptor2[1])
-    filtered_amount, passed_kp, failed_kp = analyse_matches(descriptor1, descriptor2, RATIO, plot=True)
-    present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
+
+
+if __name__ == '__main__':
+    # sift = cv2.SIFT_create()
+    # bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    #
+    # bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+    # image1, image2 = read_images(FIRST_IMAGE)
+    # key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
+    # present_key_points(image1, key_points1, image2, key_points2)
+    # # plot_ratios(descriptor1, descriptor2)
+    # image3 = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
+    # # present_match(image3)
+    # # print_descriptors(descriptor1[1], descriptor2[1])
+    # filtered_amount, passed_kp, failed_kp = analyse_matches(descriptor1, descriptor2, RATIO, plot=True)
+    # present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
+    brute_force_match(FIRST_IMAGE)
+    get_matches_by_significance_test(FIRST_IMAGE)
