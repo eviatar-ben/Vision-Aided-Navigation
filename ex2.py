@@ -151,7 +151,7 @@ def cv2_triangulation(in_liers, m1c, m2c):
     points2 = []
     edit_to_pt()
 
-    ps = cv2.triangulatePoints(m1c, m2c, np.array(np.array(points1)).T, np.array(np.array(points2)).T).T
+    ps = cv2.triangulatePoints(m1c, m2c, np.array(points1).T, np.array(points2).T).T
     return np.squeeze(cv2.convertPointsFromHomogeneous(ps))
 
 
@@ -171,15 +171,15 @@ def present_world_3d_points(points, cv2=False):
 
 def get_camera_mat():
     k, m1, m2 = read_cameras()
-    m1 = k @ m1
-    m2 = k @ m2
-    return k, m1, m2
+    km1 = k @ m1
+    km2 = k @ m2
+    return k, km1, km2, m1, m2
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ex3 utils:
 def get_cloud(image):
-    _, m1c, m2c = get_camera_mat()
+    _, m1c, m2c, _, _ = get_camera_mat()
 
     image1, image2 = read_images(image)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, sift)
@@ -191,7 +191,7 @@ def get_cloud(image):
 
     # 2.3A:
     world_3d_points = triangulation(in_liers, m1c, m2c)
-    cv2_world_3d_points = cv2_triangulation(in_liers, m1c, m2c)
+    # cv2_world_3d_points = cv2_triangulation(in_liers, m1c, m2c)
     # present_world_3d_points(world_3d_points)
     # present_world_3d_points(cv2_world_3d_points)
     return world_3d_points
@@ -213,7 +213,7 @@ def get_matches_stereo(image1, image2):
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, sift)
     matches = bf.match(descriptor1, descriptor2)
     idx_kp1 = rectify(matches, key_points1, key_points2)
-    return idx_kp1, key_points1
+    return idx_kp1, key_points1, key_points2
 
 
 if __name__ == '__main__':

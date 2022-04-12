@@ -145,22 +145,22 @@ def get_matches_by_significance_test(kp1, d1, kp2, d2, img1, img2):
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ex3 utils:
-def get_significance_matches(image1, image2, factor=0.35):
+def get_significance_matches(img1, img2, factor=0.35):
     def significance_test():
         result = {}
-        two_nn = bf_ncc.knnMatch(descriptor1, descriptor2, k=2)
+        two_nn = bf_ncc.knnMatch(d1, d2, k=2)
         for f, s in two_nn:
             if f.distance < factor * s.distance:
                 result[f.queryIdx] = f.trainIdx
         return result
 
-    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
+    kp1, d1, kp2, d2, img1, img2 = detect_and_describe(img1, img2)
     # present_key_points(image1, key_points1, image2, key_points2)
     # plot_ratios(descriptor1, descriptor2)
     # print_descriptors(descriptor1[1], descriptor2[1])
     idx_kp1 = significance_test()
     # present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
-    return key_points1, key_points2, idx_kp1
+    return idx_kp1, kp1, kp2
 
 
 if __name__ == '__main__':
