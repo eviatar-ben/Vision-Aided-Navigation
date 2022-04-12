@@ -18,6 +18,8 @@ CYAN = (0, 255, 255)
 
 numpy.set_printoptions(threshold=sys.maxsize)
 
+sift = cv2.SIFT_create()
+
 
 # ex1 utils:
 # -------------------------------------------------------------------------------------------------------------------
@@ -177,8 +179,6 @@ def get_camera_mat():
 # ----------------------------------------------------------------------------------------------------------------------
 # ex3 utils:
 def get_cloud(image):
-    sift = cv2.SIFT_create()
-
     _, m1c, m2c = get_camera_mat()
 
     image1, image2 = read_images(image)
@@ -191,13 +191,33 @@ def get_cloud(image):
 
     # 2.3A:
     world_3d_points = triangulation(in_liers, m1c, m2c)
-    # cv2_world_3d_points = cv2_triangulation(in_liers, m1c, m2c)
+    cv2_world_3d_points = cv2_triangulation(in_liers, m1c, m2c)
     # present_world_3d_points(world_3d_points)
     # present_world_3d_points(cv2_world_3d_points)
     return world_3d_points
 
 
+def rectify(matches, key_points1, key_points2):
+    idx_kp1 = {}
+    # todo check of query is frame1
+    matches_i_in_img1 = [m.queryIdx for m in matches]
+    matches_i_in_img2 = [m.trainIdx for m in matches]
+    for i, j in zip(matches_i_in_img1, matches_i_in_img2):
+        if abs(key_points1[i].pt[1] - key_points2[j].pt[1]) < THRESH:
+            idx_kp1[i] = j
+    return idx_kp1
+
+
+def get_matches_stereo(image1, image2):
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, sift)
+    matches = bf.match(descriptor1, descriptor2)
+    idx_kp1 = rectify(matches, key_points1, key_points2)
+    return idx_kp1, key_points1
+
+
 if __name__ == '__main__':
+    # In retrospect the following rows commented in order to change the API for further exercise
     # sift = cv2.SIFT_create()
     # bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
     # _, m1c, m2c = get_camera_mat()

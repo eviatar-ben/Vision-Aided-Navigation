@@ -9,6 +9,7 @@ from plotly.subplots import make_subplots
 IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
 DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
+SECOND_IMAGE = 0o00001
 RATIO = 0.65  # equalibrium point
 numpy.set_printoptions(threshold=sys.maxsize)
 
@@ -45,7 +46,7 @@ def match(kp1, des1, kp2, des2, img1, img2, random_20_matches=True):
         random_matches = random.choices(bf.match(des1, des2), k=20)
         sorted_matches = sorted(random_matches, key=lambda x: x.distance)
         img3 = cv2.drawMatches(img1, kp1, img2, kp2, sorted_matches[:50], img2, flags=2)
-        cv2.imwrite("img3_matches.jpg", img3)
+        cv2.imwrite("img3_20matches.jpg", img3)
     else:
         matches = bf.match(des1, des2)
         sorted_matches = sorted(matches, key=lambda x: x.distance)
@@ -60,8 +61,11 @@ def present_match(img3):
 
 
 def print_descriptors(des1, des2):
-    print(f"Image1's second feature descriptor is:\n {des1}")
-    print(f"Image2's second feature descriptor is:\n {des2}")
+    print(f"Image1's first feature descriptor is:\n {des1[0]}")
+    print(f"Image2's first feature descriptor is:\n {des2[0]}")
+
+    print(f"Image1's second feature descriptor is:\n {des1[1]}")
+    print(f"Image2's second feature descriptor is:\n {des2[1]}")
 
 
 def significance_test_match(query_descriptors, train_descriptors, factor, plot=False):
@@ -87,7 +91,7 @@ def significance_test_match(query_descriptors, train_descriptors, factor, plot=F
     for f, s in two_nn:
         # multiply f.distance by a constant that has to be between 0 and 1,
         # thus decreasing the value of s.distance
-        if f.distance / s.distance < factor:
+        if abs(f.distance / s.distance) < factor:
             filtered_noise += 1
             filtered.append([f])
         else:
@@ -131,42 +135,53 @@ def present_significance_test(kp1, img1, kp2, img2, passed):
     return img3
 
 
+def get_matches_by_significance_test(kp1, d1, kp2, d2, img1, img2):
+    present_key_points(img1, kp1, img2, kp2)
+    # plot_ratios(d1, d2)
+    filtered_amount, kp, failed_kp = significance_test_match(d1, d2, RATIO, plot=True)
+    present_significance_test(kp1, img1, kp2, img2, kp)
+    return kp
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # ex3 utils:
-def get_matches_by_significance_test(img):
-    image1, image2 = read_images(img)
+def get_significance_matches(image1, image2, factor=0.35):
+    def significance_test():
+        result = {}
+        two_nn = bf_ncc.knnMatch(descriptor1, descriptor2, k=2)
+        for f, s in two_nn:
+            if f.distance < factor * s.distance:
+                result[f.queryIdx] = f.trainIdx
+        return result
+
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
     # present_key_points(image1, key_points1, image2, key_points2)
     # plot_ratios(descriptor1, descriptor2)
     # print_descriptors(descriptor1[1], descriptor2[1])
-    filtered_amount, passed_kp, failed_kp = significance_test_match(descriptor1, descriptor2, RATIO, plot=True)
+    idx_kp1 = significance_test()
     # present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
-    return passed_kp
-
-
-def brute_force_match(img):
-    image1, image2 = read_images(img)
-    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
-    present_key_points(image1, key_points1, image2, key_points2)
-    # plot_ratios(descriptor1, descriptor2)
-    image3 = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
-    # present_match(image3)
-    # print_descriptors(descriptor1[1], descriptor2[1])
+    return key_points1, key_points2, idx_kp1
 
 
 if __name__ == '__main__':
-    # sift = cv2.SIFT_create()
-    # bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    #
-    # bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-    # image1, image2 = read_images(FIRST_IMAGE)
-    # key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
-    # present_key_points(image1, key_points1, image2, key_points2)
-    # # plot_ratios(descriptor1, descriptor2)
-    # image3 = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
-    # # present_match(image3)
-    # # print_descriptors(descriptor1[1], descriptor2[1])
-    # filtered_amount, passed_kp, failed_kp = analyse_matches(descriptor1, descriptor2, RATIO, plot=True)
-    # present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
-    brute_force_match(FIRST_IMAGE)
-    get_matches_by_significance_test(FIRST_IMAGE)
+    # In retrospect, the following rows commented in order to change the API for further exercise
+
+    # 1.1
+    image1, image2 = read_images(FIRST_IMAGE)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2)
+    present_key_points(image1, key_points1, image2, key_points2)
+    # 1.2
+    print_descriptors(descriptor1, descriptor2)
+
+    # 1.3
+    image3 = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
+    present_match(image3)
+
+    # 1.4
+    # plot_ratios(descriptor1, descriptor2)
+    passed_kp = get_matches_by_significance_test(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
+    present_significance_test(key_points1, image1, key_points2, image2, passed_kp)
+
+    # --------------------------------
+    # brute_force_match(FIRST_IMAGE)
+    # get_matches_by_significance_test(FIRST_IMAGE)
