@@ -145,6 +145,7 @@ def get_matches_by_significance_test(kp1, d1, kp2, d2, img1, img2):
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ex3 utils:
+
 def get_significance_matches(img1, img2, factor=0.35):
     def significance_test():
         result = {}
