@@ -47,15 +47,26 @@ def rodriguez_to_mat(rvec, tvec):
 
 
 def extract_fours(mutual_kpL0, mutual_kpL1, kpL0, kpR0, kpL1, kpR1, matches00p, matches11p):
-    l_0, r_0, l_1, r_1 = [], [], [], []
+    point_l1, point_r1 = [], []
+    # p_l0, p_r0, p_l1, p_r1 = [], [], [], []
+
+    convert_pos_idx_l1 = {}
+    convert_pos_idx_r1 = {}
+    # todo check the counter and the conversion
+    counter = 0
     for i, j in zip(mutual_kpL0, mutual_kpL1):
-        l_0.append(kpL0[i].pt)
-        r_0.append(kpR0[matches00p[i]].pt)
+        # p_and_i_l0.append(kpL0[i].pt)
+        # p_and_i_r0.append(kpR0[matches00p[i]].pt, matches00p[i]))
 
-        l_1.append(kpL1[j].pt)
-        r_1.append(kpR1[matches11p[j]].pt)
+        point_l1.append(kpL1[j].pt)
+        convert_pos_idx_l1[counter] = j
 
-    return l_0, r_0, l_1, r_1
+        point_r1.append(kpR1[matches11p[j]].pt)
+        convert_pos_idx_r1[counter] = matches11p[j]
+
+        counter += 1
+
+    return convert_pos_idx_l1, convert_pos_idx_r1, point_l1, point_r1
 
 
 def plot_cmr_relative_position(ext_r0, ext_l1, ext_r1):
@@ -106,21 +117,23 @@ def transform3dp(p3d):
     return np.column_stack([p3d, np.ones(len(p3d))])
 
 
-def get_supporters(pl1, pr1, lm1, rm1, matches11p, mutual_matches_ind_l0, mutual_matches_ind_l1):
+def get_supporters(projected_l1, projected_r1, matched_l1, matched_r1, convert_pos__idx_l1, convert_pos__idx_r1,
+                   matches11p):
     intersect_supp_ind_l1 = []
-    support_l1 = np.power(lm1 - pl1, 2).sum(axis=1) <= THRESH ** 2
-    support_r1 = np.power(rm1 - pr1, 2).sum(axis=1) <= THRESH ** 2
+    support_l1 = np.power(matched_l1 - projected_l1, 2).sum(axis=1) <= THRESH ** 2
+    support_r1 = np.power(matched_r1 - projected_r1, 2).sum(axis=1) <= THRESH ** 2
 
     support_l1_ind = np.asarray(support_l1).nonzero()
     support_r1_ind = np.asarray(support_r1).nonzero()
 
-    # todo check that the match is mutual?
-    rev_matches11p = {y: x for x, y in matches11p.items()}
-    for i in support_r1_ind[0]:
-        if rev_matches11p[i] in support_l1_ind:
-            intersect_supp_ind_l1.append(rev_matches11p[i])
+    support_r1_ind = [convert_pos__idx_r1[i] for i in support_r1_ind[0]]
 
     # intersect supporters:
+    rev_matches11p = {y: x for x, y in matches11p.items()}
+    for i in support_l1_ind[0]:
+        if rev_matches11p[convert_pos__idx_l1[i]] in support_r1_ind:
+            pass
+
     return support_l1, support_r1
 
 
@@ -132,8 +145,8 @@ def plot_supporters(l0, l1, support_l1, support_r1, kp_l1, kp_r1, matches11p):
     support_r1 = []
 
     for i, j in zip(support_l1_ind[0], support_r1_ind[0]):
-        support_l1.append(kp_l1[i])
-        support_r1.append(kp_r1[j])
+        support_l1.append(kp_l1[i].pt)
+        support_r1.append(kp_r1[j].pt)
 
     # todo : complete the plot
 
@@ -150,29 +163,29 @@ def plot_supporters(l0, l1, support_l1, support_r1, kp_l1, kp_r1, matches11p):
     plt.close(fig)
 
 
-def get_maximal_group(p3d, pl1, lm1, rm1, matches11p,
-                      mutual_matches_ind_l0, mutual_matches_ind_l1):
-    maximum = 0
-    four = None
-    for _ in range(int(len(p3d) / RANDOM_FACTOR)):
-        i = np.random.randint(len(p3d), size=4)
-        object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
-        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
-        try:
-            Rt = rodriguez_to_mat(r, t)
-        except:
-            continue
-        ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
-        projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
-        support_l1, support_r1 = get_supporters(projected_l1, projected_r1, np.asarray(lm1), np.asarray(rm1),
-                                                matches11p,
-                                                mutual_matches_ind_l0, mutual_matches_ind_l1)
-
-        sup_num = np.count_nonzero(support_l1) + np.count_nonzero(support_r1)
-        if sup_num > maximum:
-            maximum = sup_num
-            four = i
-    return maximum, four
+# def get_maximal_group(p3d, pl1, lm1, rm1, matches11p,
+#                       mutual_matches_ind_l0, mutual_matches_ind_l1):
+#     maximum = 0
+#     four = None
+#     for _ in range(int(len(p3d) / RANDOM_FACTOR)):
+#         i = np.random.randint(len(p3d), size=4)
+#         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
+#         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+#         try:
+#             Rt = rodriguez_to_mat(r, t)
+#         except:
+#             continue
+#         ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
+#         projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
+#         support_l1, support_r1 = get_supporters(projected_l1, projected_r1, np.asarray(lm1), np.asarray(rm1),
+#                                                 matches11p,
+#                                                 mutual_matches_ind_l0, mutual_matches_ind_l1)
+#
+#         sup_num = np.count_nonzero(support_l1) + np.count_nonzero(support_r1)
+#         if sup_num > maximum:
+#             maximum = sup_num
+#             four = i
+#     return maximum, four
 
 
 def main():
@@ -188,9 +201,9 @@ def main():
     mutual_matches_ind_l0, mutual_matches_ind_l1 = get_mutual_kp_ind(matches00p, matches11p, matches01p)
 
     # tests:
-    lm0, rm0, lm1, rm1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kpL0, kpR0, kpL1, kpR1, matches00p,
-                                       matches11p)
-    ex3_tests.draw_tracking(l0, r0, l1, r1, lm0[:4], rm0[:4], lm1[:4], rm1[:4])
+    # lm0, rm0, lm1, rm1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kpL0, kpR0, kpL1, kpR1, matches00p,
+    #                                    matches11p)
+    # ex3_tests.draw_tracking(l0, r0, l1, r1, lm0[70:74], rm0[70:74], lm1[70:74], rm1[70:74])
 
     p3d = get_p3d(kpL0, kpR0, mutual_matches_ind_l0, matches00p)
 
@@ -206,16 +219,17 @@ def main():
 
     # 2.4:
     # todo: efficiency discard lm0, rm0
-    lm0, rm0, lm1, rm1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kpL0, kpR0, kpL1, kpR1, matches00p,
-                                       matches11p)
+    convert_pos_idx_l1, convert_pos_idx_r1, point_l1, point_r1 = extract_fours(
+        mutual_matches_ind_l0, mutual_matches_ind_l1, kpL0, kpR0, kpL1, kpR1, matches00p, matches11p)
+
     projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
-    support_l1, support_r1 = get_supporters(projected_l1, projected_r1, np.asarray(lm1), np.asarray(rm1), matches11p,
-                                            mutual_matches_ind_l0, mutual_matches_ind_l1)
+    support_l1, support_r1 = get_supporters(projected_l1, projected_r1, np.asarray(point_l1),
+                                            np.asarray(point_r1), convert_pos_idx_l1, convert_pos_idx_r1, matches11p)
     plot_supporters(l0, l1, np.asarray(support_l1), np.asarray(support_r1), kpL1, kpR1, matches11p)
 
     # 2.5:
-    maximum, four = get_maximal_group(p3d, pl1, lm1, rm1, matches11p,
-                                      mutual_matches_ind_l0, mutual_matches_ind_l1)
+    # maximum, four = get_maximal_group(p3d, pl1, lm1, rm1, matches11p,
+    #                                   mutual_matches_ind_l0, mutual_matches_ind_l1)
 
 
 if __name__ == '__main__':
