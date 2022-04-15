@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib import image
 import plotly.express as px
 import pandas as pd
+import exs_plots
 
 THRESH = 2
 RANDOM_FACTOR = 16
@@ -178,8 +179,8 @@ def plot_supporters(l0, l1, supporters, pl1, pl0):
 def get_maximal_group(p3d, pl1, point_l1, point_r1):
     maximum = 0
     maximum_supporters_idx = None
-    # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
-    for _ in range(int(len(p3d) * 2)):
+    for _ in range(int(len(p3d) / RANDOM_FACTOR)):
+        # for _ in range(int(len(p3d) * 2)):
         i = np.random.randint(len(p3d), size=4)
         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
@@ -196,38 +197,45 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
             maximum_supporters_idx = supporters_idx
     return maximum_supporters_idx
 
-def online_ransac(p3d, pl1, point_l1, point_r1):
-    # max_supp, max_supp_group_idx = -1, None = 0
-    maximum_supporters_idx = None
-    # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
-    for _ in range(int(len(p3d) * 2)):
-        i = np.random.randint(len(p3d), size=4)
-        object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
-        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
-        try:
-            Rt = rodriguez_to_mat(r, t)
-        except:
-            continue
-        ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
-        projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
 
-        supporters_idx = get_supporters(projected_l1, projected_r1, point_l1, point_r1)
-        if len(supporters_idx[0]) > maximum:
-            maximum = len(supporters_idx[0])
-            maximum_supporters_idx = supporters_idx
-    return maximum_supporters_idx
+# def online_ransac(p3d, pl1, point_l1, point_r1):
+#     max_supporters_number, max_supp_group_idx = -1, None
+#     inliers_num, outliers_num = 0, 0
+#     first_loop_iter = 0
+#     first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
+#         1 - np.power(1 - outliers_perc, 4))
+#     outliers_perc, prob = 0.99, 0.99
+#
+#     # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
+#     while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
+#         i = np.random.randint(len(p3d), size=4)
+#         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
+#         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+#         try:
+#             Rt = rodriguez_to_mat(r, t)
+#         except:
+#             continue
+#         ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
+#         projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
+#
+#         supporters_idx = get_supporters(projected_l1, projected_r1, point_l1, point_r1)
+#         num_supp = len(supporters_idx)
+#
+#         if len(supporters_idx[0]) > max_supporters_number:
+#             max_supporters_number = len(supporters_idx[0])
+#             maximum_supporters_idx = supporters_idx
+#
+#         first_loop_iter += 1
+#
+#         outliers_num += len(p3d) - num_supp
+#         inliers_num += num_supp
+#         outliers_perc = min(outliers_num / (inliers_num + outliers_num), 0.99)
+#     return maximum_supporters_idx
+
 
 def refine_transformation(supporters_idx, p3d, pl1):
-    if not supporters_idx:
-        return None
     object_points, image_points = p3d[supporters_idx], cv2.KeyPoint_convert(pl1[supporters_idx])
-    try:
-        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None,
-                                 flags=cv2.SOLVEPNP_ITERATIVE)
-    except:
-        return None
-    if not suc:
-        return None
+    suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_ITERATIVE)
     Rt = rodriguez_to_mat(r, t)
     return Rt
 
@@ -255,6 +263,8 @@ def plot_clouds(p3d, transform_p3d):
 def one_shot(i):
     l0, r0 = ex1.read_images(ex1.FIRST_IMAGE + i)
     l1, r1 = ex1.read_images(ex1.FIRST_IMAGE + (i + 1))
+
+    # in the sake of efficiency blurring the images
     kernel_size = 10
     l0 = cv2.blur(l0, (kernel_size, kernel_size))
     r0 = cv2.blur(r0, (kernel_size, kernel_size))
@@ -281,7 +291,7 @@ def one_shot(i):
 def play(stop):
     def compute_rts():
         for i in range(0, stop - 1):
-            if i in [i for i in range(1, 3500, 50)]:
+            if i in [i for i in range(1, 3450, 50)]:
                 print(i)
             rts_path.append(one_shot(i))
 
@@ -333,65 +343,69 @@ def get_ground_truth_transformations(left_cam_trans_path=GROUND_TRUTH_PATH):
     return trans_ground_truth
 
 
-# def main():
-#     l0, r0 = ex1.read_images(ex1.FIRST_IMAGE)
-#     l1, r1 = ex1.read_images(ex1.SECOND_IMAGE)
-#     # 3.1:
-#     match0, matches00p, kp_l0, kp_ro = ex2.get_matches_stereo(l0, r0)
-#     match11, matches11p, kp_l1, kp_r1 = ex2.get_matches_stereo(l1, r1)
-#     img0_cloud, img1_cloud = ex2.get_cloud(ex2.FIRST_IMAGE), ex2.get_cloud(ex2.SECOND_IMAGE)
-#     # 3.2:
-#     matches01p, _, _ = ex1.get_significance_matches(img1=l0, img2=l1)  # todo: change the parameter for efficiency
-#
-#     # match01, matches01p, _, _ = ex2.get_brute_force_matches(img1=l0,
-#     #                                                         img2=l1)  # todo: change the parameter for efficiency
-#     # 3.3:
-#     mutual_matches_ind_l0, mutual_matches_ind_l1 = get_mutual_kp_ind(matches00p, matches11p, matches01p)
-#
-#     # tests:
-#     # lm0, rm0, lm1, rm1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kpL0, kpR0, kpL1, kpR1,
-#     # matches00p, matches11p)
-#     # ex3_tests.draw_tracking(l0, r0, l1, r1, lm0[70:74], rm0[70:74], lm1[70:74], rm1[70:74])
-#     # ex3_tests.test_mutual(mutual_matches_ind_l0, mutual_matches_ind_l1, matches00p, matches11p, matches01p)
-#
-#     p3d = get_p3d(kp_l0, kp_ro, mutual_matches_ind_l0, matches00p)
-#
-#     pl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
-#     # todo: test that
-#     pl0 = get_pl0(mutual_matches_ind_l0, kp_l0, matches01p)
-#
-#     object_points, image_points = p3d[0:4], cv2.KeyPoint_convert(pl1[0:4])
-#     suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
-#     Rt = rodriguez_to_mat(r, t)
-#
-#     # todo: finish the plot
-#     ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
-#     plot_cmr_relative_position(ext_r0, ext_l1, ext_r1)
-#
-#     # 2.4:
-#     point_l1, point_r1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
-#                                        matches00p, matches11p)
-#
-#     projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
-#
-#     supporters = get_supporters(projected_l1, projected_r1, np.asarray(point_l1), np.asarray(point_r1))
-#     # todo: finish the plot maybe th problem is only in pl0 values conversion from pl1
-#     plot_supporters(l0, l1, supporters, pl1, pl0)
-#
-#     # 2.5:
-#     supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
-#     Rt = refine_transformation(supporters_idx, p3d, pl1)
-#
-#     transform_p3d = transform_cloud(transform3dp(p3d), Rt.T)
-#     # todo need to merge both clouds together
-#     # plot_clouds(p3d, transform_p3d)
-#     # 2.5:
-#     # play(500)
+def main():
+    l0, r0 = ex1.read_images(ex1.FIRST_IMAGE)
+    l1, r1 = ex1.read_images(ex1.SECOND_IMAGE)
+
+    # 3.1:
+
+    img0_cloud, img1_cloud = ex2.get_cloud(ex2.FIRST_IMAGE), ex2.get_cloud(ex2.SECOND_IMAGE)
+    # exs_plots.plot_first_2_clouds(img0_cloud.T, img1_cloud.T)
+
+    # 3.2:
+    match0, matches00p, kp_l0, kp_ro = ex2.get_matches_stereo(l0, r0)
+    match11, matches11p, kp_l1, kp_r1 = ex2.get_matches_stereo(l1, r1)
+    matches01p, _, _ = ex1.get_significance_matches(img1=l0, img2=l1)  # todo: change the parameter for efficiency
+    mutual_matches_ind_l0, mutual_matches_ind_l1 = get_mutual_kp_ind(matches00p, matches11p, matches01p)
+    exs_plots.present_match_in_l0(kp_l0, mutual_matches_ind_l0, l0)
+
+    # tests:
+    # lm0, rm0, lm1, rm1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kpL0, kpR0, kpL1, kpR1,
+    # matches00p, matches11p)
+    # ex3_tests.draw_tracking(l0, r0, l1, r1, lm0[70:74], rm0[70:74], lm1[70:74], rm1[70:74])
+    # ex3_tests.test_mutual(mutual_matches_ind_l0, mutual_matches_ind_l1, matches00p, matches11p, matches01p)
+
+    # 3.3:
+    p3d = get_p3d(kp_l0, kp_ro, mutual_matches_ind_l0, matches00p)
+
+    pl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
+    # todo: test that
+    pl0 = get_pl0(mutual_matches_ind_l0, kp_l0, matches01p)
+
+    object_points, image_points = p3d[0:4], cv2.KeyPoint_convert(pl1[0:4])
+    suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+    Rt = rodriguez_to_mat(r, t)
+
+    # todo: finish the plot
+    ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
+    plot_cmr_relative_position(ext_r0, ext_l1, ext_r1)
+
+    # 2.4:
+    point_l1, point_r1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
+                                       matches00p, matches11p)
+
+    projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
+
+    supporters = get_supporters(projected_l1, projected_r1, np.asarray(point_l1), np.asarray(point_r1))
+    # todo: finish the plot maybe th problem is only in pl0 values conversion from pl1
+    plot_supporters(l0, l1, supporters, pl1, pl0)
+
+    # 2.5:
+    supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    Rt = refine_transformation(supporters_idx, p3d, pl1)
+
+    transform_p3d = transform_cloud(transform3dp(p3d), Rt.T)
+    # todo need to merge both clouds together
+    # plot_clouds(p3d, transform_p3d)
+
+    # 2.5:
+    # positions = play(3450)
+    # plot_positions(positions)
 
 
 if __name__ == '__main__':
-    # main()
-    positions = play(3450)
-    plot_positions(positions)
+    main()
+    # positions = play(3450)
+    # plot_positions(positions)
 
-#todo check the flann.knnmatch
+# todo check the flann.knnmatch
