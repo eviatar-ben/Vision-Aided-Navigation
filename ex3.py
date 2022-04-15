@@ -196,6 +196,26 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
             maximum_supporters_idx = supporters_idx
     return maximum_supporters_idx
 
+def online_ransac(p3d, pl1, point_l1, point_r1):
+    # max_supp, max_supp_group_idx = -1, None = 0
+    maximum_supporters_idx = None
+    # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
+    for _ in range(int(len(p3d) * 2)):
+        i = np.random.randint(len(p3d), size=4)
+        object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
+        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+        try:
+            Rt = rodriguez_to_mat(r, t)
+        except:
+            continue
+        ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
+        projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
+
+        supporters_idx = get_supporters(projected_l1, projected_r1, point_l1, point_r1)
+        if len(supporters_idx[0]) > maximum:
+            maximum = len(supporters_idx[0])
+            maximum_supporters_idx = supporters_idx
+    return maximum_supporters_idx
 
 def refine_transformation(supporters_idx, p3d, pl1):
     if not supporters_idx:
@@ -260,8 +280,9 @@ def one_shot(i):
 
 def play(stop):
     def compute_rts():
-        for i in range(0, stop):
-            print(i)
+        for i in range(0, stop - 1):
+            if i in [i for i in range(1, 3500, 50)]:
+                print(i)
             rts_path.append(one_shot(i))
 
     def compute_relative_transformation():
@@ -370,5 +391,7 @@ def get_ground_truth_transformations(left_cam_trans_path=GROUND_TRUTH_PATH):
 
 if __name__ == '__main__':
     # main()
-    positions = play(1000)
+    positions = play(3450)
     plot_positions(positions)
+
+#todo check the flann.knnmatch
