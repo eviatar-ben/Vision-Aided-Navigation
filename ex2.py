@@ -187,7 +187,7 @@ def get_cloud(image):
     image3, matches = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
     # 2.2:
     in_liers, out_liers = reject_matches(matches, key_points1, key_points2)
-    draw_rejected_matches(image1, image2, in_liers, out_liers)
+    # draw_rejected_matches(image1, image2, in_liers, out_liers)
 
     # 2.3A:
     world_3d_points = triangulation(in_liers, m1c, m2c)

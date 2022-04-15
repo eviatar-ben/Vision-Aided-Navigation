@@ -1,12 +1,9 @@
 import cv2
+import numpy as np
+import pandas as pd
 import ex1
 import ex2
 import ex3_tests
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import image
-import plotly.express as px
-import pandas as pd
 import exs_plots
 
 THRESH = 2
@@ -32,7 +29,6 @@ def get_p3d(kp1, kp2, mutual, matches):
     for i in mutual:
         left0.append(kp1[i])
         left1.append(kp2[matches[i]])
-    # todo maybe triangulate each in oder to maintain order
     # return ex2.triangulation([left0, left1], m1, m2)
     return ex2.cv2_triangulation([left0, left1], km1, km2)
 
@@ -70,29 +66,6 @@ def extract_fours(mutual_kpL0, mutual_kpL1, kpL0, kpR0, kpL1, kpR1, matches00p, 
     return point_l1, point_r1
 
 
-def plot_cmr_relative_position(ext_r0, ext_l1, ext_r1):
-    l0cam = np.asarray([0, 0, 0])
-    r0cam = -np.linalg.inv(ext_r0[:, :-1]) @ ext_r0[:, -1]
-    l1cam = -np.linalg.inv(ext_l1[:, :-1]) @ ext_l1[:, -1]
-    r1cam = -np.linalg.inv(ext_r1[:, :-1]) @ ext_r1[:, -1]
-    fig = plt.figure(figsize=(4, 4))
-    ax = fig.add_subplot(111, projection='3d', title="The relative position of the four cameras")
-
-    ax.scatter(l0cam[0], l0cam[2])
-    ax.scatter(r0cam[0], r0cam[2])
-    ax.scatter(l1cam[0], l1cam[2])
-    ax.scatter(r1cam[0], r1cam[2])
-    # plt.show()
-
-    # TODO: SHOT NEED TO BE FROM ABOVE
-    # fig = px.scatter_3d(p, x=0, y=1, z=2, labels={
-    #     '0': "X axis",
-    #     '1': "Y axis",
-    #     '2': "Z axis"},
-    #                     title=f'Calculated 3D points yields by linear least squares triangulation ({algorithm})')
-    # fig.show()
-
-
 def calc_mat(T):
     ext_l0 = np.column_stack((np.identity(3), np.zeros(shape=(3, 1))))
     ext_l1, ext_r0 = T, m2
@@ -122,58 +95,7 @@ def get_supporters(projected_l1, projected_r1, matched_l1, matched_r1):
     support_l1 = np.power(matched_l1 - projected_l1, 2).sum(axis=1) <= THRESH ** 2
     support_r1 = np.power(matched_r1 - projected_r1, 2).sum(axis=1) <= THRESH ** 2
 
-    # support_l1_ind = np.asarray(support_l1).nonzero()
-    # support_r1_ind = np.asarray(support_r1).nonzero()
-
-    # supporters =
-    # intersect supporters:
-    # support_l1_ind = {convert_pos__idx_l1[i] for i in support_l1_ind[0]}
-    # support_r1_ind = {convert_pos__idx_r1[i] for i in support_r1_ind[0]}
-    # support_r1_ind = {matches11p[i] for i in support_r1_ind}
-
     return np.logical_and(support_r1, support_l1).nonzero()
-
-
-def plot_supporters(l0, l1, supporters, pl1, pl0):
-    support_l0 = []
-    support_l1 = []
-    pl1 = pl1.tolist()
-    for i in supporters[0]:
-        support_l0.append(pl0[i].pt)
-        support_l1.append(pl1[i].pt)
-
-    # print(support_l0)
-    # print(support_l1)
-
-    support_l0_x = [i[0] for i in support_l0]
-    support_l0_y = [i[1] for i in support_l0]
-
-    support_l1_x = [i[0] for i in support_l1]
-    support_l1_y = [i[1] for i in support_l1]
-    # todo : complete the plot
-
-    fig = plt.figure(figsize=(10, 7))
-    rows, cols = 2, 1
-    fig.suptitle(f'')
-
-    # Left1 camera
-    ax1 = fig.add_subplot(rows, cols, 1)
-    ax1.imshow(l1, cmap='gray')
-    ax1.set_title("Left0 camera")
-    ax1.scatter(support_l0_x, support_l0_y, s=1, color="cyan")
-    # plt.scatter(left1_matches_coor[supporters_idx][:, 0],
-    #             left1_matches_coor[supporters_idx][:, 1], s=3, color="orange")
-
-    # Left0 camera
-    ax2 = fig.add_subplot(rows, cols, 2)
-    ax2.imshow(l0, cmap='gray')
-    ax2.set_title("Left1 camera")
-    ax2.scatter(support_l1_x, support_l1_y, s=1, color="cyan")
-    # plt.scatter(left0_matches_coor[supporters_idx][:, 0],
-    #             left0_matches_coor[supporters_idx][:, 1], s=3, color="orange")
-
-    fig.savefig("supporters.png")
-    plt.close(fig)
 
 
 def get_maximal_group(p3d, pl1, point_l1, point_r1):
@@ -244,22 +166,6 @@ def transform_cloud(p3d, Rt_transpose):
     return p3d @ Rt_transpose
 
 
-def plot_clouds(p3d, transform_p3d):
-    fig = px.scatter_3d(p3d, x=0, y=1, z=2, labels={
-        '0': "X axis",
-        '1': "Y axis",
-        '2': "Z axis"},
-                        title=f'')
-    fig.show()
-    fig = px.scatter_3d(transform_p3d, x=0, y=1, z=2, labels={
-        '0': "X axis",
-        '1': "Y axis",
-        '2': "Z axis"},
-                        title=f'')
-    fig.show()
-    pass
-
-
 def one_shot(i):
     l0, r0 = ex1.read_images(ex1.FIRST_IMAGE + i)
     l1, r1 = ex1.read_images(ex1.FIRST_IMAGE + (i + 1))
@@ -322,17 +228,6 @@ def play(stop):
     return np.array(positions)
 
 
-def plot_positions(positions):
-    fig = plt.figure()
-
-    ax = fig.add_subplot()
-    ax.set_title(f"Left cameras 2d trajectory for {len(positions)} frames.")
-    ax.scatter(positions[:, 0], positions[:, 2], s=1, c='red')
-
-    fig.savefig(f"Trajectory_from_cmd.png")
-    plt.close(fig)
-
-
 def get_ground_truth_transformations(left_cam_trans_path=GROUND_TRUTH_PATH):
     trans_ground_truth = []
     with open(left_cam_trans_path) as f:
@@ -367,45 +262,43 @@ def main():
 
     # 3.3:
     p3d = get_p3d(kp_l0, kp_ro, mutual_matches_ind_l0, matches00p)
-
     pl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
-    # todo: test that
-    pl0 = get_pl0(mutual_matches_ind_l0, kp_l0, matches01p)
 
     object_points, image_points = p3d[0:4], cv2.KeyPoint_convert(pl1[0:4])
     suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
     Rt = rodriguez_to_mat(r, t)
+    print(Rt)
 
-    # todo: finish the plot
     ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
-    plot_cmr_relative_position(ext_r0, ext_l1, ext_r1)
+    exs_plots.plot_cmr_relative_position(ext_r0, ext_l1, ext_r1)
 
-    # 2.4:
+    # 3.4:
     point_l1, point_r1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
                                        matches00p, matches11p)
 
     projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
-
     supporters = get_supporters(projected_l1, projected_r1, np.asarray(point_l1), np.asarray(point_r1))
-    # todo: finish the plot maybe th problem is only in pl0 values conversion from pl1
-    plot_supporters(l0, l1, supporters, pl1, pl0)
 
-    # 2.5:
+    # todo: finish the plot maybe th problem is only in pl0 values conversion from pl1
+    pl0 = get_pl0(mutual_matches_ind_l0, kp_l0, matches01p)
+    exs_plots.plot_supporters(l0, l1, supporters, pl1, pl0)
+
+    # 3.5:
     supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
     Rt = refine_transformation(supporters_idx, p3d, pl1)
 
     transform_p3d = transform_cloud(transform3dp(p3d), Rt.T)
     # todo need to merge both clouds together
-    # plot_clouds(p3d, transform_p3d)
+    exs_plots.plot_clouds(p3d, transform_p3d)
 
-    # 2.5:
+    # 3.6:
     # positions = play(3450)
-    # plot_positions(positions)
+    # exs_plots.plot_positions(positions)
 
 
 if __name__ == '__main__':
     main()
     # positions = play(3450)
-    # plot_positions(positions)
+    # exs_plots.plot_positions(positions)
 
 # todo check the flann.knnmatch
