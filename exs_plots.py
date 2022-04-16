@@ -2,7 +2,10 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
+GROUND_TRUTH_PATH = r"../dataset/poses/00.txt"
 
+
+# -----------------------------------------------------3----------------------------------------------------------------
 # 3.1
 def plot_first_2_clouds(img0_cloud, img1_cloud):
     fig = plt.figure()
@@ -97,13 +100,84 @@ def plot_clouds(p3d, transform_p3d):
     #                     title=f'')
     # fig.show()
     pass
+
+
 # 3.6:
-def plot_positions(positions):
+def plot_trajectory_2d(positions):
     fig = plt.figure()
 
     ax = fig.add_subplot()
-    ax.set_title(f"Left cameras 2d trajectory for {len(positions)} frames.")
+    ax.set_title(f"Left cameras 2D trajectory for {len(positions)} frames.")
     ax.scatter(positions[:, 0], positions[:, 2], s=1, c='red')
 
-    fig.savefig(f"Trajectory_from_cmd.png")
+    fig.savefig(f"Trajectory 2D.png")
+    plt.close(fig)
+
+
+def draw_left_cam_3d_trajectory(positions):
+    fig = plt.figure(figsize=plt.figaspect(0.5))
+
+    ax = fig.add_subplot(projection='3d')
+    ax.set_title("Left cameras 3d trajectory  for {len(positions)} frames.")
+    ax.scatter3D(positions[:, 0], positions[:, 1], positions[:, 2], s=1, c='red')
+
+    fig.savefig("Trajectory 3D.png")
+    plt.close(fig)
+
+
+def plot_both_trajectories(left_camera_positions):
+    def get_ground_truth_transformations2(left_cam_trans_path=GROUND_TRUTH_PATH):
+        def relative(t):
+            return -1 * t[:, :3].T @ t[:, 3]
+
+        ground_truth_trans = []
+        with open(left_cam_trans_path) as f:
+            lines = f.readlines()
+        for i in range(3450):
+            left_mat = np.array(lines[i].split(" "))[:-1].astype(float).reshape((3, 4))
+            ground_truth_trans.append(left_mat)
+
+        relative_cameras_pos_arr = []
+        for t in ground_truth_trans:
+            relative_cameras_pos_arr.append(relative(t))
+        return np.array(relative_cameras_pos_arr)
+
+    ground_truth_positions = get_ground_truth_transformations2()
+    fig = plt.figure()
+
+    ax = fig.add_subplot()
+    ax.set_title(f"Left cameras 2d trajectory compared to ground truth of"
+                 f" {len(left_camera_positions)} frames (ground truth - cyan)\n")
+    ax.scatter(left_camera_positions[:, 0], left_camera_positions[:, 2], s=1, c='red')
+    ax.scatter(ground_truth_positions[:, 0], ground_truth_positions[:, 2], s=1, c='cyan')
+
+    fig.savefig(f"Trajectory with ground truth 2D.png")
+    plt.close(fig)
+
+
+def plot_ground_truth_2d():
+    def get_ground_truth_transformations2(left_cam_trans_path=GROUND_TRUTH_PATH):
+        def relative(t):
+            return -1 * t[:, :3].T @ t[:, 3]
+
+        ground_truth_trans = []
+        with open(left_cam_trans_path) as f:
+            lines = f.readlines()
+        for i in range(3450):
+            left_mat = np.array(lines[i].split(" "))[:-1].astype(float).reshape((3, 4))
+            ground_truth_trans.append(left_mat)
+
+        relative_cameras_pos_arr = []
+        for t in ground_truth_trans:
+            relative_cameras_pos_arr.append(relative(t))
+        return np.array(relative_cameras_pos_arr)
+
+    ground_truth_positions = get_ground_truth_transformations2()
+    fig = plt.figure()
+
+    ax = fig.add_subplot()
+    ax.set_title(f"Left cameras 2d trajectory compared to ground truth")
+    ax.scatter(ground_truth_positions[:, 0], ground_truth_positions[:, 2], s=1, c='cyan')
+
+    fig.savefig(f"Ground truth 2D.png")
     plt.close(fig)

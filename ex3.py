@@ -8,7 +8,6 @@ import exs_plots
 
 THRESH = 2
 RANDOM_FACTOR = 16
-GROUND_TRUTH_PATH = r"../VAN_ex/dataset/poses/00.txt'"
 
 k, km1, km2, m1, m2 = ex2.get_camera_mat()
 
@@ -92,6 +91,7 @@ def transform3dp(p3d):
 
 
 def get_supporters(projected_l1, projected_r1, matched_l1, matched_r1):
+    # supporters are determined by norma 2.:
     support_l1 = np.power(matched_l1 - projected_l1, 2).sum(axis=1) <= THRESH ** 2
     support_r1 = np.power(matched_r1 - projected_r1, 2).sum(axis=1) <= THRESH ** 2
 
@@ -101,8 +101,8 @@ def get_supporters(projected_l1, projected_r1, matched_l1, matched_r1):
 def get_maximal_group(p3d, pl1, point_l1, point_r1):
     maximum = 0
     maximum_supporters_idx = None
-    for _ in range(int(len(p3d) / RANDOM_FACTOR)):
-        # for _ in range(int(len(p3d) * 2)):
+    # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
+    for _ in range(int(len(p3d) * 2)):
         i = np.random.randint(len(p3d), size=4)
         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
@@ -121,14 +121,13 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
 
 
 # def online_ransac(p3d, pl1, point_l1, point_r1):
-#     max_supporters_number, max_supp_group_idx = -1, None
+#     max_supporters_number, maximum_supporters_idx = -1, None
 #     inliers_num, outliers_num = 0, 0
 #     first_loop_iter = 0
 #     first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
 #         1 - np.power(1 - outliers_perc, 4))
 #     outliers_perc, prob = 0.99, 0.99
 #
-#     # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
 #     while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
 #         i = np.random.randint(len(p3d), size=4)
 #         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
@@ -156,9 +155,14 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
 
 
 def refine_transformation(supporters_idx, p3d, pl1):
-    object_points, image_points = p3d[supporters_idx], cv2.KeyPoint_convert(pl1[supporters_idx])
-    suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_ITERATIVE)
-    Rt = rodriguez_to_mat(r, t)
+    Rt = None
+    try:
+        object_points, image_points = p3d[supporters_idx], cv2.KeyPoint_convert(pl1[supporters_idx])
+        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None,
+                                 flags=cv2.SOLVEPNP_ITERATIVE)
+        Rt = rodriguez_to_mat(r, t)
+    except:
+        print(f"refine_transformation failed with {supporters_idx} as args for cv2.solvePnP()")
     return Rt
 
 
@@ -190,6 +194,7 @@ def one_shot(i):
                                        matches00p, matches11p)
 
     supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    # supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
     Rt = refine_transformation(supporters_idx, p3d, pl1)
     return Rt
 
@@ -226,16 +231,6 @@ def play(stop):
     compute_relative_transformation()
     compute_positions()
     return np.array(positions)
-
-
-def get_ground_truth_transformations(left_cam_trans_path=GROUND_TRUTH_PATH):
-    trans_ground_truth = []
-    with open(left_cam_trans_path) as f:
-        lines = f.readlines()
-    for i in range(3450):
-        left_mat = np.array(lines[i].split(" "))[:-1].astype(float).reshape((3, 4))
-        trans_ground_truth.append(left_mat)
-    return trans_ground_truth
 
 
 def main():
@@ -285,6 +280,8 @@ def main():
 
     # 3.5:
     supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    # supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+
     Rt = refine_transformation(supporters_idx, p3d, pl1)
 
     transform_p3d = transform_cloud(transform3dp(p3d), Rt.T)
@@ -293,12 +290,13 @@ def main():
 
     # 3.6:
     # positions = play(3450)
-    # exs_plots.plot_positions(positions)
+    # exs_plots.draw_left_cam_3d_trajectory(positions)
 
 
 if __name__ == '__main__':
-    main()
-    # positions = play(3450)
-    # exs_plots.plot_positions(positions)
+    # main()
+    positions = play(3450)
+    exs_plots.plot_both_trajectories(positions)
+    exs_plots.draw_left_cam_3d_trajectory(positions)
 
 # todo check the flann.knnmatch
