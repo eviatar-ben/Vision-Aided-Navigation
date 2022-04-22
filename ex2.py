@@ -51,7 +51,7 @@ def match(kp1, des1, kp2, des2, img1, img2):
     matches = bf.match(des1, des2)
     sorted_matches = sorted(matches, key=lambda x: x.distance)
     img3 = cv2.drawMatches(img1, kp1, img2, kp2, sorted_matches[:50], img2, flags=2)
-    cv2.imwrite("img3_matches.jpg", img3)
+    cv2.imwrite("plots/ex3/img3_matches.jpg", img3)
     return img3, matches
 
 

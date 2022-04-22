@@ -39,12 +39,12 @@ def get_pl1(mutual_kp, kp):
     return np.array(result)
 
 
-def get_pl0(mutual_matches_ind_l1, kp_l0, matches01p):
-    result = []
+def get_mutual_kp_l0(mutual_matches_ind_l1, kp_l0, matches01p):
+    mutual_matches_kp_l0 = []
     rev_matches10p = {y: x for x, y in matches01p.items()}
     for i in mutual_matches_ind_l1:
-        result.append(kp_l0[rev_matches10p[i]])
-    return np.array(result)
+        mutual_matches_kp_l0.append(kp_l0[rev_matches10p[i]])
+    return np.array(mutual_matches_kp_l0)
 
 
 def rodriguez_to_mat(rvec, tvec):
@@ -101,8 +101,8 @@ def get_supporters(projected_l1, projected_r1, matched_l1, matched_r1):
 def get_maximal_group(p3d, pl1, point_l1, point_r1):
     maximum = 0
     maximum_supporters_idx = None
-    # for _ in range(int(len(p3d) / RANDOM_FACTOR)):
-    for _ in range(int(len(p3d) * 2)):
+    for _ in range(int(len(p3d) / RANDOM_FACTOR)):
+    # for _ in range(int(len(p3d) * 16)):
         i = np.random.randint(len(p3d), size=4)
         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
@@ -257,9 +257,9 @@ def main():
 
     # 3.3:
     p3d = get_p3d(kp_l0, kp_ro, mutual_matches_ind_l0, matches00p)
-    pl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
+    kpl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
 
-    object_points, image_points = p3d[0:4], cv2.KeyPoint_convert(pl1[0:4])
+    object_points, image_points = p3d[0:4], cv2.KeyPoint_convert(kpl1[0:4])
     suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
     Rt = rodriguez_to_mat(r, t)
     print(Rt)
@@ -274,19 +274,19 @@ def main():
     projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
     supporters = get_supporters(projected_l1, projected_r1, np.asarray(point_l1), np.asarray(point_r1))
 
-    pl0 = get_pl0(mutual_matches_ind_l1, kp_l0, matches01p)
-    exs_plots.plot_supporters(l0, l1, supporters, pl1, pl0)
+    kpl0 = get_mutual_kp_l0(mutual_matches_ind_l1, kp_l0, matches01p)
+    exs_plots.plot_supporters(l0, l1, supporters, kpl1, kpl0)
 
     # 3.5:
-    supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    supporters_idx = get_maximal_group(p3d, kpl1, np.asarray(point_l1), np.asarray(point_r1))
     # supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
 
-    Rt = refine_transformation(supporters_idx, p3d, pl1)
+    Rt = refine_transformation(supporters_idx, p3d, kpl1)
 
     transform_p3d = transform_cloud(transform3dp(p3d), Rt.T)
     # todo need to merge both clouds together
     exs_plots.plot_clouds(p3d, transform_p3d)
-
+    exs_plots._plot_in_and_out_liers(l0, l1, supporters_idx, kpl1, kpl0)
     # 3.6:
     # positions = play(3450)
     # exs_plots.draw_left_cam_3d_trajectory(positions)
