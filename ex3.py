@@ -41,9 +41,9 @@ def get_pl1(mutual_kp, kp):
 
 def get_pl0(mutual_matches_ind_l1, kp_l0, matches01p):
     result = []
-    rev_matches01p = {y: x for x, y in matches01p.items()}
+    rev_matches10p = {y: x for x, y in matches01p.items()}
     for i in mutual_matches_ind_l1:
-        result.append(kp_l0[matches01p[i]])
+        result.append(kp_l0[rev_matches10p[i]])
     return np.array(result)
 
 
@@ -121,18 +121,18 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
 
 
 # def online_ransac(p3d, pl1, point_l1, point_r1):
-#     max_supporters_number, maximum_supporters_idx = -1, None
-#     inliers_num, outliers_num = 0, 0
-#     first_loop_iter = 0
-#     first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
-#         1 - np.power(1 - outliers_perc, 4))
-#     outliers_perc, prob = 0.99, 0.99
-#
-#     while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
-#         i = np.random.randint(len(p3d), size=4)
-#         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
-#         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
-#         try:
+# #     max_supporters_number, maximum_supporters_idx = -1, None
+# #     inliers_num, outliers_num = 0, 0
+# #     first_loop_iter = 0
+# #     first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
+# #         1 - np.power(1 - outliers_perc, 4))
+# #     outliers_perc, prob = 0.99, 0.99
+# #
+# #     while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
+# #         i = np.random.randint(len(p3d), size=4)
+# #         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
+# #         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+# #         try:
 #             Rt = rodriguez_to_mat(r, t)
 #         except:
 #             continue
@@ -274,8 +274,7 @@ def main():
     projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
     supporters = get_supporters(projected_l1, projected_r1, np.asarray(point_l1), np.asarray(point_r1))
 
-    # todo: finish the plot maybe th problem is only in pl0 values conversion from pl1
-    pl0 = get_pl0(mutual_matches_ind_l0, kp_l0, matches01p)
+    pl0 = get_pl0(mutual_matches_ind_l1, kp_l0, matches01p)
     exs_plots.plot_supporters(l0, l1, supporters, pl1, pl0)
 
     # 3.5:
@@ -294,9 +293,9 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    positions = play(3450)
-    exs_plots.plot_both_trajectories(positions)
-    exs_plots.draw_left_cam_3d_trajectory(positions)
+    main()
+    # positions = play(3450)
+    # exs_plots.plot_both_trajectories(positions)
+    # exs_plots.draw_left_cam_3d_trajectory(positions)
 
 # todo check the flann.knnmatch
