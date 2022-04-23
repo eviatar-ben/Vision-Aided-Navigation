@@ -120,38 +120,38 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
     return maximum_supporters_idx
 
 
-# def online_ransac(p3d, pl1, point_l1, point_r1):
-# #     max_supporters_number, maximum_supporters_idx = -1, None
-# #     inliers_num, outliers_num = 0, 0
-# #     first_loop_iter = 0
-# #     first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
-# #         1 - np.power(1 - outliers_perc, 4))
-# #     outliers_perc, prob = 0.99, 0.99
-# #
-# #     while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
-# #         i = np.random.randint(len(p3d), size=4)
-# #         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
-# #         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
-# #         try:
-#             Rt = rodriguez_to_mat(r, t)
-#         except:
-#             continue
-#         ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
-#         projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
-#
-#         supporters_idx = get_supporters(projected_l1, projected_r1, point_l1, point_r1)
-#         num_supp = len(supporters_idx)
-#
-#         if len(supporters_idx[0]) > max_supporters_number:
-#             max_supporters_number = len(supporters_idx[0])
-#             maximum_supporters_idx = supporters_idx
-#
-#         first_loop_iter += 1
-#
-#         outliers_num += len(p3d) - num_supp
-#         inliers_num += num_supp
-#         outliers_perc = min(outliers_num / (inliers_num + outliers_num), 0.99)
-#     return maximum_supporters_idx
+def online_ransac(p3d, pl1, point_l1, point_r1):
+    max_supporters_number, maximum_supporters_idx = -1, None
+    inliers_num, outliers_num = 0, 0
+    first_loop_iter = 0
+    first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
+        1 - np.power(1 - outliers_perc, 4))
+    outliers_perc, prob = 0.99, 0.99
+
+    while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
+        i = np.random.randint(len(p3d), size=4)
+        object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
+        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+        try:
+            Rt = rodriguez_to_mat(r, t)
+        except:
+            continue
+        ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
+        projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
+
+        supporters_idx = get_supporters(projected_l1, projected_r1, point_l1, point_r1)
+        num_supp = len(supporters_idx[0])
+
+        if len(supporters_idx[0]) > max_supporters_number:
+            max_supporters_number = len(supporters_idx[0])
+            maximum_supporters_idx = supporters_idx
+
+        first_loop_iter += 1
+
+        outliers_num += len(p3d) - num_supp
+        inliers_num += num_supp
+        outliers_perc = min(outliers_num / (inliers_num + outliers_num), 0.99)
+    return maximum_supporters_idx
 
 
 def refine_transformation(supporters_idx, p3d, pl1):
@@ -193,8 +193,8 @@ def one_shot(i):
     point_l1, point_r1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
                                        matches00p, matches11p)
 
-    supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
-    # supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    # supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
     Rt = refine_transformation(supporters_idx, p3d, pl1)
     return Rt
 
@@ -278,8 +278,8 @@ def main():
     exs_plots.plot_supporters(l0, l1, supporters, kpl1, kpl0)
 
     # 3.5:
-    supporters_idx = get_maximal_group(p3d, kpl1, np.asarray(point_l1), np.asarray(point_r1))
-    # supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
+    # supporters_idx = get_maximal_group(p3d, kpl1, np.asarray(point_l1), np.asarray(point_r1))
+    supporters_idx = online_ransac(p3d, kpl1, np.asarray(point_l1), np.asarray(point_r1))
 
     Rt = refine_transformation(supporters_idx, p3d, kpl1)
 
@@ -293,9 +293,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # positions = play(3450)
-    # exs_plots.plot_both_trajectories(positions)
-    # exs_plots.draw_left_cam_3d_trajectory(positions)
+    # main()
+    positions = play(3450)
+    exs_plots.plot_both_trajectories(positions)
+    exs_plots.draw_left_cam_3d_trajectory(positions)
 
 # todo check the flann.knnmatch
