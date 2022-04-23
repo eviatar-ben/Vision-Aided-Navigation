@@ -5,7 +5,7 @@ import ex1
 import ex2
 import ex3_tests
 import exs_plots
-
+import time
 THRESH = 2
 RANDOM_FACTOR = 16
 
@@ -294,8 +294,14 @@ def main():
 
 if __name__ == '__main__':
     # main()
+    start_time = time.time()
+    # your code
     positions = play(3450)
     exs_plots.plot_both_trajectories(positions)
     exs_plots.draw_left_cam_3d_trajectory(positions)
+
+    elapsed_time = time.time() - start_time
+    print(elapsed_time)
+
 
 # todo check the flann.knnmatch
