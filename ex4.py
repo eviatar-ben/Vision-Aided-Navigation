@@ -1,3 +1,6 @@
+import pickle
+
+
 class DataBase:
     def __init__(self):
         self.tracks = {}
@@ -18,9 +21,16 @@ class DataBase:
     def get_feature_location(self, frame_id, track_id):
         return self.tracks[track_id].frames_id_to_kp(frame_id)
 
-    def serialize(self):
-        # todo: need to pickle
-        pass
+    def serialize(self, path=r"ex4_pickles\DB.pickle"):
+        pickle_out = open(r"ex4_pickles\DB.pickle", "wb")
+        pickle.dump(self, pickle_out)
+        pickle_out.close()
+
+    @staticmethod
+    def load_from_file(path=r"ex4_pickles\DB.pickle"):
+        pickle_in = open(r"ex4_pickles\DB.pickle", "rb")
+        data_base = pickle.load(pickle_in)
+        return data_base
 
 
 class Track:
@@ -61,3 +71,15 @@ class Frame:
 
     def get_tracks_ids(self):
         return self.tracks_ids
+
+
+if __name__ == '__main__':
+    # db = DataBase()
+    # t = Track()
+    # db.add_track(t)
+    # t2 = Track()
+    # db.add_track(t2)
+    # db.serialize()
+    # unpickled = db.load_from_file()
+    # print(unpickled.tracks)
+    pass
