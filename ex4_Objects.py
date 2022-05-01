@@ -6,6 +6,9 @@ class DataBase:
         self.tracks = {}  # {track_id : track}
         self.frames = {}  # {frame_id : frame}
 
+        # last matches from l0 to l1:
+        self.last_matches = None
+
     def add_track(self, track):
         self.tracks[track.track_id] = track
 
@@ -52,6 +55,7 @@ class Track:
         self.frames_id_to_kp = {}  # {frame_id: (kp_lo, kp_l1)} # mapping frames_id to key points
 
         self.kps_ids_match_in_track_path = []
+
         Track.track_id_counter += 1
 
     def add_frame(self, frame):
@@ -83,8 +87,13 @@ class Frame:
         return self.tracks_ids
 
 
-def build_data_base():
-    pass
+class Feature:
+    def __init__(self, x, y, frame, track_id, matched_feature):
+        self.x = x
+        self.y = y
+        self.frame = frame
+        self.track_id = track_id
+        self.matched_feature = matched_feature  # {idx_l0:idx_l1}:
 
 
 if __name__ == '__main__':
