@@ -32,11 +32,31 @@ def convert_data_kp_to_xy_point(tracks_data):
     return converted_data_xy_points
 
 
+def first_frame(db, l0_points, r0_points, supporters_matches01p):
+    db.last_matches = supporters_matches01p
+    frame = Frame()
+    for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
+        track = Track()
+        track.add_frame(frame)
+
+        feature = Feature(l0_point[0], l0_point[1], frame.frame_id)
+        frame.add_track_ids(track)
+        frame.add_feature_by_track_id(track.track_id, feature)
+
+        db.add_track(track)
+        db.add_frame(frame)
+
+
+def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p):
+    pass
+
+
 def build_data(data_pickled_already=True):
     tracks_data = get_tracks_data(data_pickled_already)
     db = DataBase()
 
     for i, track_data in enumerate(tracks_data):
+        i += 1  # consideing the first frame
         first_frame_kp, second_frame_kp, supporters_matches01p = track_data[0], track_data[1], track_data[2]
         l0_points, r0_points = first_frame_kp
         l1_points, r1_points = second_frame_kp
@@ -44,23 +64,7 @@ def build_data(data_pickled_already=True):
         if not db.last_matches:
             first_frame(db, l0_points, r0_points, supporters_matches01p)
         else:
-            for feature_in_l0 in supporters_matches01p.keys():
-                # feature = Feature(_, _, i, )
-                pass
-        frame = Frame()
-        assert frame.frame_id == i
-
-        print(supporters_matches01p)
-
-
-def first_frame(db, l0_points, r0_points, supporters_matches01p):
-    db.last_matches = supporters_matches01p
-    frame = Frame()
-    for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
-        track = Track()
-        track.add_frame(frame)
-        feature = Feature(l0_point[0], l0_point[1], frame.frame_id, track.track_id, matched_feature)
-        db.add_track(track)
+            extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p)
 
 
 def main():
