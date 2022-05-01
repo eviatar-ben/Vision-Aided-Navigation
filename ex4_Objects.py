@@ -5,7 +5,6 @@ class DataBase:
     def __init__(self):
         self.tracks = {}  # {track_id : track}
         self.frames = {}  # {frame_id : frame}
-
         # last matches from l0 to l1:
         self.last_matches = None
 
@@ -16,17 +15,11 @@ class DataBase:
     def add_frame(self, frame):
         self.frames[frame.frame_id] = frame
 
-    def get_tracks_ids_in_frame(self, frame_id):
-        return self.frames[frame_id].get_tracks_ids()
-
-    def get_frames_ids_in_track(self, track_id):
-        return self.frames[track_id].get_frames_ids_in_track()
-
-    def get_kps_in_l0_r0(self, frame_id, track_id):
-        return self.tracks[track_id].frames_id_to_kp(frame_id)
+    def get_frame(self, frame_id, track_id):
+        return self.tracks[track_id].get_frame(frame_id)
 
     def get_feature_location(self, frame_id, track_id):
-        kpl0, kpl1 = self.get_kps_in_l0_r0(frame_id, track_id)
+        kpl0, kpl1 = self.get_frame(frame_id, track_id)
         xl, yl = kpl0.pt
         xr, yr = kpl1.pt
         assert yr == yl
@@ -50,17 +43,22 @@ class Track:
 
     def __init__(self):
         self.track_id = Track.track_id_counter
-        self.frames_ids = {}  # {frame_id : frame}
-
+        self.frames_by_ids = {}  # {frame_id : frame}
+        self.last_match = None
         # self.kps_ids_match_in_track_path = []
-
         Track.track_id_counter += 1
 
+    def set_last_match(self, match):
+        self.last_match = match
+
     def add_frame(self, frame):
-        self.frames_ids[frame.frame_id] = frame
+        self.frames_by_ids[frame.frame_id] = frame
+
+    def get_frame(self, frame_id):
+        return self.frames_by_ids[frame_id]
 
     def __len__(self):
-        return len(self.frames_ids)
+        return len(self.frames_by_ids)
 
     def __str__(self):
         return
@@ -75,19 +73,15 @@ class Frame:
     def __init__(self):
         self.frame_id = Frame.frame_id_counter
         # which tracks going through this frame maybe dictionary is needed {frame: kp in lo}
-        self.tracks = {}  # {track_id : (x, y)}
-        self.features = []
-
-        self.track_id_to_kp = {}  # {track_id: (kp_lo, kp_l1)} # mapping frames_id to key points
+        self.tracks_to_features = {}  # {track_id : feature}
 
         Frame.frame_id_counter += 1
 
-    # todo: might be redundant to save all tracks in frame object
-    def add_track_ids(self, track):
-        self.tracks[track.track_id] = track
+    def add_feature(self, track_id, feature):
+        self.tracks_to_features[track_id] = feature
 
-    def add_feature_by_track_id(self, track_id, feature):
-        self.track_id_to_kp[track_id] = feature
+    def get_feature(self, track_id):
+        return self.tracks_to_features[track_id]
 
 
 class Feature:

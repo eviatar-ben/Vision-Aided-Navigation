@@ -32,39 +32,59 @@ def convert_data_kp_to_xy_point(tracks_data):
     return converted_data_xy_points
 
 
-def first_frame(db, l0_points, r0_points, supporters_matches01p):
+def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame):
     db.last_matches = supporters_matches01p
-    frame = Frame()
     for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
         track = Track()
-        track.add_frame(frame)
+        track.add_frame(first_frame)
+        track.set_last_match(matched_feature)
 
-        feature = Feature(l0_point[0], l0_point[1], frame.frame_id)
-        frame.add_track_ids(track)
-        frame.add_feature_by_track_id(track.track_id, feature)
+        feature = Feature(l0_point[0], l0_point[1], first_frame.frame_id)
+        first_frame.add_feature(track.track_id, feature)
 
         db.add_track(track)
-        db.add_frame(frame)
+        db.add_frame(first_frame)
+    return first_frame
 
 
-def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p):
-    pass
+def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame):
+    # prev_l1_match is the last match in the previous frame:
+    for cur_l0, cur_l1 in supporters_matches01p.items():
+
+        # the track is still going:
+        if cur_l0 in db.last_matches.values():  # todo check sanity
+            # extract the proper track:
+            for track_id in prev_frame.tracks_to_features.keys():
+                # if db.tracks[track_id].last_match == ():
+                #     cur_track = prev_frame
+                pass
+
+        # new track
+        else:
+            track = Track()
+            track.add_frame(cur_frame)
+            pass
+    print(supporters_matches01p)
+    print(db.last_matches)
+    a = 0
 
 
 def build_data(data_pickled_already=True):
     tracks_data = get_tracks_data(data_pickled_already)
     db = DataBase()
+    prev_frame = None
+    first_frame = Frame()
 
-    for i, track_data in enumerate(tracks_data):
-        i += 1  # consideing the first frame
+    for track_data in tracks_data:
         first_frame_kp, second_frame_kp, supporters_matches01p = track_data[0], track_data[1], track_data[2]
         l0_points, r0_points = first_frame_kp
         l1_points, r1_points = second_frame_kp
-
         if not db.last_matches:
-            first_frame(db, l0_points, r0_points, supporters_matches01p)
+            prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame)
         else:
-            extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p)
+            cur_frame = Frame()
+            extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame)
+            prev_frame = cur_frame
 
 
 def main():
