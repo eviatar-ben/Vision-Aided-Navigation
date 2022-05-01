@@ -6,6 +6,8 @@ import ex2
 import ex3_tests
 import exs_plots
 import time
+import pickle
+
 THRESH = 2
 RANDOM_FACTOR = 16
 
@@ -32,7 +34,7 @@ def get_p3d(kp1, kp2, mutual, matches):
     return ex2.cv2_triangulation([left0, left1], km1, km2)
 
 
-def get_pl1(mutual_kp, kp):
+def get_mutual_kp_l1(mutual_kp, kp):
     result = []
     for i in mutual_kp:
         result.append(kp[i])
@@ -52,7 +54,7 @@ def rodriguez_to_mat(rvec, tvec):
     return np.hstack((rot, tvec))
 
 
-def extract_fours(mutual_kpL0, mutual_kpL1, kpL0, kpR0, kpL1, kpR1, matches00p, matches11p):
+def get_pl1_and_pr1(mutual_kpL0, mutual_kpL1, kpL0, kpR0, kpL1, kpR1, matches00p, matches11p):
     point_l1, point_r1 = [], []
     # p_l0, p_r0, p_l1, p_r1 = [], [], [], []
 
@@ -102,7 +104,7 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
     maximum = 0
     maximum_supporters_idx = None
     for _ in range(int(len(p3d) / RANDOM_FACTOR)):
-    # for _ in range(int(len(p3d) * 16)):
+        # for _ in range(int(len(p3d) * 16)):
         i = np.random.randint(len(p3d), size=4)
         object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
         suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
@@ -181,30 +183,61 @@ def one_shot(i):
     l1 = cv2.blur(l1, (kernel_size, kernel_size))
     r1 = cv2.blur(r1, (kernel_size, kernel_size))
 
-    match0, matches00p, kp_l0, kp_ro = ex2.get_matches_stereo(l0, r0)
+    match0, matches00p, kp_l0, kp_r0 = ex2.get_matches_stereo(l0, r0)
     match11, matches11p, kp_l1, kp_r1 = ex2.get_matches_stereo(l1, r1)
     matches01p, _, _ = ex1.get_significance_matches(img1=l0, img2=l1)
     # match01, matches01p, _, _ = ex2.get_brute_force_matches(img1=l0, img2=l1)
     mutual_matches_ind_l0, mutual_matches_ind_l1 = get_mutual_kp_ind(matches00p, matches11p, matches01p)
 
-    p3d = get_p3d(kp_l0, kp_ro, mutual_matches_ind_l0, matches00p)
-    pl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
+    p3d = get_p3d(kp_l0, kp_r0, mutual_matches_ind_l0, matches00p)
+    mutual_kp_l1 = get_mutual_kp_l1(mutual_matches_ind_l1, kp_l1)
 
-    point_l1, point_r1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
-                                       matches00p, matches11p)
+    point_l1, point_r1 = get_pl1_and_pr1(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_r0, kp_l1, kp_r1,
+                                         matches00p, matches11p)
 
-    # supporters_idx = get_maximal_group(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
-    supporters_idx = online_ransac(p3d, pl1, np.asarray(point_l1), np.asarray(point_r1))
-    Rt = refine_transformation(supporters_idx, p3d, pl1)
-    return Rt
+    # supporters_idx = get_maximal_group(p3d, mutual_kp_l1, np.asarray(point_l1), np.asarray(point_r1))
+    supporters_idx = online_ransac(p3d, mutual_kp_l1, np.asarray(point_l1), np.asarray(point_r1))
+    # supporters_idx is indices relevant to mutual_kp_l1
+    Rt = refine_transformation(supporters_idx, p3d, mutual_kp_l1)
+
+    first_frame_kp, second_frame_kp, supporters_matches01p = \
+        get_l0_kp_in_frame(supporters_idx[0], mutual_matches_ind_l1, mutual_matches_ind_l0, matches01p,
+                           matches00p, matches11p, kp_l0, kp_r0, kp_l1, kp_r1)
+    return Rt, first_frame_kp, second_frame_kp, supporters_matches01p
 
 
-def play(stop):
+def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind_l0, matches01p, matches00p, matches11p,
+                       kp_l0, kp_r0, kp_l1, kp_r1, sanity_check=False):
+    mutual_supporters_idx_matches_ind_l0 = [mutual_matches_ind_l0[i] for i in supporters_idx]
+    mutual_supporters_idx_matches_ind_r0 = [matches00p[i] for i in mutual_matches_ind_l0]
+    mutual_supporters_idx_matches_ind_l1 = [mutual_matches_ind_l1[i] for i in supporters_idx]
+    mutual_supporters_idx_matches_ind_r1 = [matches11p[i] for i in mutual_matches_ind_l1]
+
+    if sanity_check:
+        for i, j in zip(mutual_matches_ind_l0, mutual_matches_ind_l1):
+            assert j == matches01p[i]
+
+    mutual_supporters_kp_matches_ind_l0 = [kp_l0[i] for i in mutual_supporters_idx_matches_ind_l0]
+    mutual_supporters_kp_matches_ind_r0 = [kp_r0[i] for i in mutual_supporters_idx_matches_ind_r0]
+    mutual_supporters_kp_matches_ind_l1 = [kp_l1[i] for i in mutual_supporters_idx_matches_ind_l1]
+    mutual_supporters_kp_matches_ind_r1 = [kp_r1[i] for i in mutual_supporters_idx_matches_ind_r1]
+
+    first_frame_kp = (mutual_supporters_kp_matches_ind_l0, mutual_supporters_kp_matches_ind_r0)
+    second_frame_kp = (mutual_supporters_kp_matches_ind_l1, mutual_supporters_kp_matches_ind_r1)
+
+    supporters_matches01p = {key: matches01p[key] for key in mutual_supporters_idx_matches_ind_l0}
+
+    return first_frame_kp, second_frame_kp, supporters_matches01p
+
+
+def play(stop, pickling=True):
     def compute_rts():
         for i in range(0, stop - 1):
             if i in [i for i in range(1, 3450, 50)]:
                 print(i)
-            rts_path.append(one_shot(i))
+            Rt, first_frame_kp, second_frame_kp, supporters_matches01p = one_shot(i)
+            rts_path.append(Rt)
+            tracks_data.append([first_frame_kp, second_frame_kp, supporters_matches01p])
 
     def compute_relative_transformation():
         def get_composition(trans1, trans2):
@@ -226,11 +259,16 @@ def play(stop):
     rts_path = []
     relative_transformation_path = []
     positions = []
+    tracks_data = []
 
     compute_rts()
     compute_relative_transformation()
     compute_positions()
-    return np.array(positions)
+    if pickling:
+        pickle_out = open(r"ex4_pickles\tracks_data.pickle", "wb")
+        pickle.dump(tracks_data, pickle_out)
+        pickle_out.close()
+    return np.array(positions), tracks_data
 
 
 def main():
@@ -257,7 +295,7 @@ def main():
 
     # 3.3:
     p3d = get_p3d(kp_l0, kp_ro, mutual_matches_ind_l0, matches00p)
-    kpl1 = get_pl1(mutual_matches_ind_l1, kp_l1)
+    kpl1 = get_mutual_kp_l1(mutual_matches_ind_l1, kp_l1)
 
     object_points, image_points = p3d[0:4], cv2.KeyPoint_convert(kpl1[0:4])
     suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
@@ -268,8 +306,8 @@ def main():
     exs_plots.plot_cmr_relative_position(ext_r0, ext_l1, ext_r1)
 
     # 3.4:
-    point_l1, point_r1 = extract_fours(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
-                                       matches00p, matches11p)
+    point_l1, point_r1 = get_pl1_and_pr1(mutual_matches_ind_l0, mutual_matches_ind_l1, kp_l0, kp_ro, kp_l1, kp_r1,
+                                         matches00p, matches11p)
 
     projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
     supporters = get_supporters(projected_l1, projected_r1, np.asarray(point_l1), np.asarray(point_r1))
@@ -292,6 +330,11 @@ def main():
     # exs_plots.draw_left_cam_3d_trajectory(positions)
 
 
+# ------------------------------------------------------ex4-----------------------------------------------------------
+def get_frame_and_kps_l0_l1(supporters_idx, kp_l0, kp_r0, kp_l1, kp_r1, matches00p, matches01p, matches11p, i):
+    pass
+
+
 if __name__ == '__main__':
     # main()
     start_time = time.time()
@@ -302,6 +345,5 @@ if __name__ == '__main__':
 
     elapsed_time = time.time() - start_time
     print(elapsed_time)
-
 
 # todo check the flann.knnmatch
