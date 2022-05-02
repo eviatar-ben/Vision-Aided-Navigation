@@ -104,6 +104,7 @@ class Frame:
         self.frame_id = Frame.frame_id_counter
         # which tracks going through this frame maybe dictionary is needed {frame: kp in frame_id frame}
         self.tracks_to_features = {}  # {track_id : feature}
+        self.outgoing = 0
 
         Frame.frame_id_counter += 1
 
@@ -121,7 +122,6 @@ class Feature:
         self.xr = xr
         self.y = y
         self.matched_feature = matched_feature  # {idx_l0:idx_l1}:
-
 
 
 if __name__ == '__main__':

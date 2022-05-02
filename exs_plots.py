@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+from ex4 import FRAMES_NUM
 
 GROUND_TRUTH_PATH = r"../dataset/poses/00.txt"
 DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
@@ -287,7 +288,7 @@ def display_track(db, track):
 
     # todo check if its possible to avoid truncate the coordinates
     frames_l_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
-                              zip(R, frames_l_xy)]
+                              zip(frames_l, frames_l_xy)]
     l_vertical_concatenate = np.concatenate(frames_l_with_features, axis=0)
 
     frames_r_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
@@ -300,3 +301,53 @@ def display_track(db, track):
     cv2.imwrite(r'plots\ex4\track_l' + str(track.track_id) + '.jpg', l_vertical_concatenate)
     cv2.imwrite(r'plots\ex4\track_lr' + str(track.track_id) + '.jpg', l_r_concatenate)
 
+
+def connectivity_graph(frames):
+    """
+    Present a connectivity graph: For each frame, the number of tracks outgoing to the next
+    frame (the number of tracks on the frame with links also in the next frame)
+    :param frames: frames
+    """
+    outgoings = [frame.outgoing for frame in frames]
+
+    x = range(len(outgoings))
+
+    f = plt.figure()
+    f.set_figwidth(14)
+    f.set_figheight(7)
+
+    # plotting the points
+    plt.plot(x, outgoings)
+
+    plt.xlabel('frames')
+    plt.ylabel('Outgoing tracks')
+    plt.title(f'Connectivity for {FRAMES_NUM} frames')
+
+    plt.savefig(r"plots\ex4\Connectivity_Graph.png")
+
+
+def present_inliers_per_frame_percentage():
+    """
+    Present a graph of the percentage of inliers per frame
+    :return:
+    """
+    pass
+
+
+def present_track_len_histogram(tracks):
+    """
+     Present a track length histogram graph
+    :return:
+    """
+    track_len = [len(track) for track in tracks.values()]
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+    hist_track_lengths, _, _ = plt.hist(track_len)
+
+    ax.set_title("Track length histogram")
+    plt.plot(hist_track_lengths)
+    plt.ylabel('Track #')
+    plt.xlabel('Track lengths')
+
+    fig.savefig(r"plots\ex4\Track length histogram.png")
+    plt.close(fig)
