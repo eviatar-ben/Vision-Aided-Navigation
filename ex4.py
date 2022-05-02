@@ -41,7 +41,7 @@ def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01
         track.add_frame(first_frame)
         db.set_last_match(cur_l1, first_frame.frame_id, track.track_id)
 
-        feature = Feature(l0_point[0], l0_point[1], matched_feature)
+        feature = Feature(l0_point[0], r0_point[0], l0_point[1], matched_feature)
         first_frame.add_feature(track.track_id, feature)
 
         db.add_track(track)
@@ -63,7 +63,7 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
             track.add_frame(cur_frame)
             db.set_last_match(cur_l1, cur_frame.frame_id, track_id)
             # todo maybe add track_if to feature's fields
-            feature = Feature(l0_point[0], l0_point[1], matched_feature)
+            feature = Feature(l0_point[0], r0_point[0], l0_point[1], matched_feature)
             cur_frame.add_feature(track.track_id, feature)
             # print(f"track: {track.track_id} is still going with length {len(track)}")
         # new track
@@ -72,7 +72,7 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
             track.add_frame(cur_frame)
             db.set_last_match(cur_l1, cur_frame.frame_id, track.track_id)
 
-            feature = Feature(l0_point[0], l0_point[1], matched_feature)
+            feature = Feature(l0_point[0],r0_point[0], l0_point[1], matched_feature)
             cur_frame.add_feature(track.track_id, feature)
 
             db.add_track(track)

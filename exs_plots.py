@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 
 GROUND_TRUTH_PATH = r"../dataset/poses/00.txt"
+DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
+FIRST_IMAGE = 000000
 
 
 # -----------------------------------------------------3----------------------------------------------------------------
@@ -268,58 +270,33 @@ def plot_ground_truth_2d():
 
 # -----------------------------------------------------4----------------------------------------------------------------
 def display_track(db, track):
-    frames = [frame.frame_id for frame in track.frames_by_ids.values()]
-    print(frames)
-    print(track.track_id)
-    pass
-# def draw_track(left0, right0, left1, right1, left0_matches_coor, right0_matches_coor, left1_matches_coor,
-#                   right1_matches_coor):
-#     """
-#     Draw a tracking of a keypoint in 4 images
-#     """
-#     fig = plt.figure(figsize=(10, 7))
-#     rows, cols = 2, 2
-#
-#     fig.suptitle(f"{len(left0_matches_coor)} point tracking")
-#
-#     # Left0 camera
-#     ax1 = fig.add_subplot(rows, cols, 1)
-#     plt.imshow(left0, cmap='gray')
-#     plt.title("Left 0")
-#
-#     # Right0 camera
-#     ax2 = fig.add_subplot(rows, cols, 2)
-#     plt.imshow(right0, cmap='gray')
-#     plt.title("Right 0")
-#
-#     # Left1 camera
-#     ax3 = fig.add_subplot(rows, cols, 3)
-#     plt.imshow(left1, cmap='gray')
-#     plt.title("Left 1")
-#
-#     # Right1 camera
-#     ax4 = fig.add_subplot(rows, cols, 4)
-#     plt.imshow(right1, cmap='gray')
-#     plt.title("Right 1")
-#
-#     for i in range(len(left0_matches_coor)):
-#         left0_right0_line = ConnectionPatch(xyA=(left0_matches_coor[i][0], left0_matches_coor[i][1]),
-#                                             xyB=(right0_matches_coor[i][0], right0_matches_coor[i][1]),
-#                                             coordsA="data", coordsB="data",
-#                                             axesA=ax1, axesB=ax2, color="red")
-#
-#         left0_left1_line = ConnectionPatch(xyA=(left0_matches_coor[i][0], left0_matches_coor[i][1]),
-#                                            xyB=(left1_matches_coor[i][0], left1_matches_coor[i][1]),
-#                                            coordsA="data", coordsB="data",
-#                                            axesA=ax1, axesB=ax3, color="red")
-#
-#         left1_right1_line = ConnectionPatch(xyA=(left1_matches_coor[i][0], left1_matches_coor[i][1]),
-#                                             xyB=(right1_matches_coor[i][0], right1_matches_coor[i][1]),
-#                                             coordsA="data", coordsB="data",
-#                                             axesA=ax3, axesB=ax4, color="red")
-#         ax2.add_artist(left0_right0_line)
-#         ax3.add_artist(left0_left1_line)
-#         ax4.add_artist(left1_right1_line)
-#
-#     fig.savefig("VAN_ex/tracking.png")
-#     plt.close(fig)
+    frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
+    frames_path = ['{:06d}.png'.format(FIRST_IMAGE + frame.frame_id) for frame in track.frames_by_ids.values()]
+    frames_l = [cv2.imread(DATA_PATH + 'image_0/' + frame_path) for frame_path in frames_path]
+    frames_r = [cv2.imread(DATA_PATH + 'image_1/' + frame_path) for frame_path in frames_path]
+
+    frames_l_xy = []
+    for frame_id in frame_ids:
+        frames_l_xy.append((db.get_feature_location(frame_id, track.track_id)[0],
+                            db.get_feature_location(frame_id, track.track_id)[2]))
+
+    frames_r_xy = []
+    for frame_id in frame_ids:
+        frames_r_xy.append((db.get_feature_location(frame_id, track.track_id)[1],
+                            db.get_feature_location(frame_id, track.track_id)[2]))
+
+    # todo check if its possible to avoid truncate the coordinates
+    frames_l_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
+                              zip(frames_l, frames_l_xy)]
+    l_vertical_concatenate = np.concatenate(frames_l_with_features, axis=0)
+
+    frames_r_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
+                              zip(frames_r, frames_r_xy)]
+    r_vertical_concatenate = np.concatenate(frames_r_with_features, axis=0)
+
+    l_r_concatenate = np.concatenate([l_vertical_concatenate, r_vertical_concatenate], axis=1)
+
+    cv2.imwrite(r'plots\ex4\track_r' + str(track.track_id) + '.jpg', r_vertical_concatenate)
+    cv2.imwrite(r'plots\ex4\track_l' + str(track.track_id) + '.jpg', l_vertical_concatenate)
+    cv2.imwrite(r'plots\ex4\track_lr' + str(track.track_id) + '.jpg', l_r_concatenate)
+

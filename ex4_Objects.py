@@ -44,12 +44,9 @@ class DataBase:
 
         frame = self.get_frame(frame_id, track_id)
         feature = frame.get_feature(track_id)
-        xl, yl = feature.x, feature.y
-        # xr, yr = kpl1.pt
-        # assert yr == yl
+        xl, xr, y = feature.xl, feature.xr, feature.y
 
-        # return xl, xr, yl
-        return xl, yl
+        return xl, xr, y
 
     def serialize(self, path=r"ex4_pickles\DB.pickle"):
         pickle_out = open(path, "wb")
@@ -73,8 +70,6 @@ class DataBase:
         print(f"Max track len is : {max_track_len}")
         print(f"Min track len is : {min_track_len}")
         print(f"Mean track len is : {mean_track_len}")
-
-
 
 
 class Track:
@@ -121,10 +116,12 @@ class Frame:
 
 class Feature:
     # todo maybe add track_if to feature's fields
-    def __init__(self, x, y, matched_feature):
-        self.x = x
+    def __init__(self, xl, xr, y, matched_feature):
+        self.xl = xl
+        self.xr = xr
         self.y = y
         self.matched_feature = matched_feature  # {idx_l0:idx_l1}:
+
 
 
 if __name__ == '__main__':
