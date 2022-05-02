@@ -7,9 +7,19 @@ class DataBase:
         self.frames = {}  # {frame_id : frame}
         # last matches from l0 to l1:
         self.last_matches = None
+        # change the architecture to list of dictionary each list i corresponding to frame i
+        # in the list dict {next_match:track_id}
+
+        self.track_by_match = {}  # {(next_match, frame_id) :track_id} : i.e, {(10, 0): 6}
 
     def add_track(self, track):
         self.tracks[track.track_id] = track
+
+    def set_last_match(self, last_match, frame_id, track_id):
+        self.track_by_match[(last_match, frame_id)] = track_id
+
+    def get_track_id_by_match(self, next_match, frame_id):
+        return self.track_by_match[(next_match, frame_id)]
 
     # todo: might be redundant to save all frames in the database
     def add_frame(self, frame):
@@ -19,12 +29,14 @@ class DataBase:
         return self.tracks[track_id].get_frame(frame_id)
 
     def get_feature_location(self, frame_id, track_id):
-        kpl0, kpl1 = self.get_frame(frame_id, track_id)
-        xl, yl = kpl0.pt
-        xr, yr = kpl1.pt
-        assert yr == yl
+        frame = self.get_frame(frame_id, track_id)
+        feature = frame.get_feature(track_id)
+        xl, yl = feature.x, feature.y
+        # xr, yr = kpl1.pt
+        # assert yr == yl
 
-        return xl, xr, yl
+        # return xl, xr, yl
+        return xl, yl
 
     def serialize(self, path=r"ex4_pickles\DB.pickle"):
         pickle_out = open(path, "wb")
@@ -44,12 +56,8 @@ class Track:
     def __init__(self):
         self.track_id = Track.track_id_counter
         self.frames_by_ids = {}  # {frame_id : frame}
-        self.last_match = None
         # self.kps_ids_match_in_track_path = []
         Track.track_id_counter += 1
-
-    def set_last_match(self, match):
-        self.last_match = match
 
     def add_frame(self, frame):
         self.frames_by_ids[frame.frame_id] = frame

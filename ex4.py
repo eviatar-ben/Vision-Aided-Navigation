@@ -4,7 +4,7 @@ import pickle
 import cv2
 import numpy as np
 
-FRAMES_NUM = 4
+FRAMES_NUM = 100
 
 
 def get_tracks_data(data_pickled_already):
@@ -35,38 +35,49 @@ def convert_data_kp_to_xy_point(tracks_data):
 def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame):
     db.last_matches = supporters_matches01p
     for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
+        cur_l0, cur_l1 = matched_feature
         track = Track()
         track.add_frame(first_frame)
-        track.set_last_match(matched_feature)
+        db.set_last_match(cur_l1, first_frame.frame_id, track.track_id)
 
-        feature = Feature(l0_point[0], l0_point[1], first_frame.frame_id)
+        feature = Feature(l0_point[0], l0_point[1], matched_feature)
         first_frame.add_feature(track.track_id, feature)
 
         db.add_track(track)
-        db.add_frame(first_frame)
+    db.add_frame(first_frame)
     return first_frame
 
 
 def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame):
     # prev_l1_match is the last match in the previous frame:
-    for cur_l0, cur_l1 in supporters_matches01p.items():
+    for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
+        cur_l0, cur_l1 = matched_feature
 
         # the track is still going:
         if cur_l0 in db.last_matches.values():  # todo check sanity
-            # extract the proper track:
-            for track_id in prev_frame.tracks_to_features.keys():
-                # if db.tracks[track_id].last_match == ():
-                #     cur_track = prev_frame
-                pass
 
+            # extract the proper track:
+            track_id = db.get_track_id_by_match(cur_l0, prev_frame.frame_id)
+            track = db.tracks[track_id]
+            track.add_frame(cur_frame)
+            db.set_last_match(cur_l1, cur_frame.frame_id, track_id)
+            feature = Feature(l0_point[0], l0_point[1], matched_feature)
+            cur_frame.add_feature(track.track_id, feature)
+            # print(f"track: {track.track_id} is still going with length {len(track)}")
         # new track
         else:
             track = Track()
             track.add_frame(cur_frame)
-            pass
-    print(supporters_matches01p)
-    print(db.last_matches)
-    a = 0
+            db.set_last_match(cur_l1, cur_frame.frame_id, track.track_id)
+
+            feature = Feature(l0_point[0], l0_point[1], matched_feature)
+            cur_frame.add_feature(track.track_id, feature)
+
+            db.add_track(track)
+            # print(f"new track: {track.track_id} with length {len(track)}")
+    db.add_frame(cur_frame)
+
+    db.last_matches = supporters_matches01p
 
 
 def build_data(data_pickled_already=True):
@@ -76,9 +87,9 @@ def build_data(data_pickled_already=True):
     first_frame = Frame()
 
     for track_data in tracks_data:
-        first_frame_kp, second_frame_kp, supporters_matches01p = track_data[0], track_data[1], track_data[2]
-        l0_points, r0_points = first_frame_kp
-        l1_points, r1_points = second_frame_kp
+        first_frame_kps, second_frame_kps, supporters_matches01p = track_data[0], track_data[1], track_data[2]
+        l0_points, r0_points = first_frame_kps
+        l1_points, r1_points = second_frame_kps
         if not db.last_matches:
             prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame)
         else:
