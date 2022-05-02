@@ -1,10 +1,11 @@
 from ex4_Objects import *
 import ex3
+import exs_plots
 import pickle
 import cv2
 import numpy as np
 
-FRAMES_NUM = 100
+FRAMES_NUM = 3450
 
 
 def get_tracks_data(data_pickled_already):
@@ -61,6 +62,7 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
             track = db.tracks[track_id]
             track.add_frame(cur_frame)
             db.set_last_match(cur_l1, cur_frame.frame_id, track_id)
+            # todo maybe add track_if to feature's fields
             feature = Feature(l0_point[0], l0_point[1], matched_feature)
             cur_frame.add_feature(track.track_id, feature)
             # print(f"track: {track.track_id} is still going with length {len(track)}")
@@ -97,10 +99,25 @@ def build_data(data_pickled_already=True):
             extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame)
             prev_frame = cur_frame
 
+    return db
+
+
+# -----------------------------------------------------missions---------------------------------------------------------
+def get_track_in_len(db, track_min_len):
+    # todo: check with random  track
+    for track in db.tracks.values():
+        if len(track) >= track_min_len:
+            return track
+
 
 def main():
-    build_data()
-    # build_data(False)
+    # 4.1
+    db = build_data()
+    # 4.2
+    db.present_statistics()
+    # 4.3
+    track = get_track_in_len(db, 10)
+    exs_plots.display_track(db, track)
 
 
 if __name__ == '__main__':

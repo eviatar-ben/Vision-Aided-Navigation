@@ -10,6 +10,8 @@ import pickle
 
 THRESH = 2
 RANDOM_FACTOR = 16
+FRAMES_NUM = 3450
+
 
 k, km1, km2, m1, m2 = ex2.get_camera_mat()
 
@@ -349,10 +351,10 @@ def get_frame_and_kps_l0_l1(supporters_idx, kp_l0, kp_r0, kp_l1, kp_r1, matches0
 if __name__ == '__main__':
     # main()
     start_time = time.time()
-    # your code
-    positions = play(3450)
-    exs_plots.plot_both_trajectories(positions)
-    exs_plots.draw_left_cam_3d_trajectory(positions)
+    positions, _ = play(FRAMES_NUM)
+
+    # exs_plots.plot_both_trajectories(positions)
+    # exs_plots.draw_left_cam_3d_trajectory(positions)
 
     elapsed_time = time.time() - start_time
     print(elapsed_time)

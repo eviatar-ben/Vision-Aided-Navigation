@@ -264,3 +264,62 @@ def plot_ground_truth_2d():
 
     fig.savefig(r"plots\ex3\Ground truth 2D.png")
     plt.close(fig)
+
+
+# -----------------------------------------------------4----------------------------------------------------------------
+def display_track(db, track):
+    frames = [frame.frame_id for frame in track.frames_by_ids.values()]
+    print(frames)
+    print(track.track_id)
+    pass
+# def draw_track(left0, right0, left1, right1, left0_matches_coor, right0_matches_coor, left1_matches_coor,
+#                   right1_matches_coor):
+#     """
+#     Draw a tracking of a keypoint in 4 images
+#     """
+#     fig = plt.figure(figsize=(10, 7))
+#     rows, cols = 2, 2
+#
+#     fig.suptitle(f"{len(left0_matches_coor)} point tracking")
+#
+#     # Left0 camera
+#     ax1 = fig.add_subplot(rows, cols, 1)
+#     plt.imshow(left0, cmap='gray')
+#     plt.title("Left 0")
+#
+#     # Right0 camera
+#     ax2 = fig.add_subplot(rows, cols, 2)
+#     plt.imshow(right0, cmap='gray')
+#     plt.title("Right 0")
+#
+#     # Left1 camera
+#     ax3 = fig.add_subplot(rows, cols, 3)
+#     plt.imshow(left1, cmap='gray')
+#     plt.title("Left 1")
+#
+#     # Right1 camera
+#     ax4 = fig.add_subplot(rows, cols, 4)
+#     plt.imshow(right1, cmap='gray')
+#     plt.title("Right 1")
+#
+#     for i in range(len(left0_matches_coor)):
+#         left0_right0_line = ConnectionPatch(xyA=(left0_matches_coor[i][0], left0_matches_coor[i][1]),
+#                                             xyB=(right0_matches_coor[i][0], right0_matches_coor[i][1]),
+#                                             coordsA="data", coordsB="data",
+#                                             axesA=ax1, axesB=ax2, color="red")
+#
+#         left0_left1_line = ConnectionPatch(xyA=(left0_matches_coor[i][0], left0_matches_coor[i][1]),
+#                                            xyB=(left1_matches_coor[i][0], left1_matches_coor[i][1]),
+#                                            coordsA="data", coordsB="data",
+#                                            axesA=ax1, axesB=ax3, color="red")
+#
+#         left1_right1_line = ConnectionPatch(xyA=(left1_matches_coor[i][0], left1_matches_coor[i][1]),
+#                                             xyB=(right1_matches_coor[i][0], right1_matches_coor[i][1]),
+#                                             coordsA="data", coordsB="data",
+#                                             axesA=ax3, axesB=ax4, color="red")
+#         ax2.add_artist(left0_right0_line)
+#         ax3.add_artist(left0_left1_line)
+#         ax4.add_artist(left1_right1_line)
+#
+#     fig.savefig("VAN_ex/tracking.png")
+#     plt.close(fig)

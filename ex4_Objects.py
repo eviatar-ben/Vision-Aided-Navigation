@@ -28,7 +28,20 @@ class DataBase:
     def get_frame(self, frame_id, track_id):
         return self.tracks[track_id].get_frame(frame_id)
 
+    def get_tracks_in_frame(self, frame_id):
+        """function that returns all the TrackIds that appear on a given FrameId"""
+        frame = self.frames[frame_id]
+        return frame.tracks_to_features.keys()
+
+    def get_frames_in_tracks(self, track_id):
+        """"a function that returns all the FrameIds that are part of a given TrackId."""
+        track = self.tracks[track_id]
+        return track.frames_by_ids.keys()
+
     def get_feature_location(self, frame_id, track_id):
+        """function that for a given (FrameId, TrackId) pair returns:
+           Feature locations of track TrackId on both left and right images as a triplet (xl, xr, y)"""
+
         frame = self.get_frame(frame_id, track_id)
         feature = frame.get_feature(track_id)
         xl, yl = feature.x, feature.y
@@ -49,6 +62,20 @@ class DataBase:
         data_base = pickle.load(pickle_in)
         return data_base
 
+    def present_statistics(self):
+        from statistics import mean
+        print(f"Total number of tracks is: {len(self.tracks)}")
+        print(f"Number of frames is: {len(self.frames)}")
+        tracks_lengths = [len(track) for track in self.tracks.values()]
+        min_track_len = min(tracks_lengths)
+        max_track_len = max(tracks_lengths)
+        mean_track_len = mean(tracks_lengths)
+        print(f"Max track len is : {max_track_len}")
+        print(f"Min track len is : {min_track_len}")
+        print(f"Mean track len is : {mean_track_len}")
+
+
+
 
 class Track:
     track_id_counter = 0
@@ -66,7 +93,7 @@ class Track:
         return self.frames_by_ids[frame_id]
 
     def __len__(self):
-        return len(self.frames_by_ids)
+        return len(self.frames_by_ids) + 1
 
     def __str__(self):
         return
@@ -80,7 +107,7 @@ class Frame:
 
     def __init__(self):
         self.frame_id = Frame.frame_id_counter
-        # which tracks going through this frame maybe dictionary is needed {frame: kp in lo}
+        # which tracks going through this frame maybe dictionary is needed {frame: kp in frame_id frame}
         self.tracks_to_features = {}  # {track_id : feature}
 
         Frame.frame_id_counter += 1
@@ -93,6 +120,7 @@ class Frame:
 
 
 class Feature:
+    # todo maybe add track_if to feature's fields
     def __init__(self, x, y, matched_feature):
         self.x = x
         self.y = y
