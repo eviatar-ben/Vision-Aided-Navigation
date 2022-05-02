@@ -123,14 +123,3 @@ class Feature:
         self.y = y
         self.matched_feature = matched_feature  # {idx_l0:idx_l1}:
 
-
-if __name__ == '__main__':
-    # db = DataBase()
-    # t = Track()
-    # db.add_track(t)
-    # t2 = Track()
-    # db.add_track(t2)
-    # db.serialize()
-    # unpickled = db.load_from_file()
-    # print(unpickled.tracks)
-    pass

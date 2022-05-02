@@ -342,11 +342,11 @@ def present_track_len_histogram(tracks):
     track_len = [len(track) for track in tracks.values()]
 
     fig, ax = plt.subplots(figsize=(10, 7))
-    hist_track_lengths, _, _ = plt.hist(track_len)
+    histogram_track_len, _, _ = plt.hist(track_len)
 
     ax.set_title("Track length histogram")
-    plt.plot(hist_track_lengths)
-    plt.ylabel('Track #')
+    plt.plot(histogram_track_len)
+    plt.ylabel('Track id ')
     plt.xlabel('Track lengths')
 
     fig.savefig(r"plots\ex4\Track length histogram.png")
