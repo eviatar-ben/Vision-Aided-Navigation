@@ -287,7 +287,7 @@ def display_track(db, track):
 
     # todo check if its possible to avoid truncate the coordinates
     frames_l_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
-                              zip(frames_l, frames_l_xy)]
+                              zip(R, frames_l_xy)]
     l_vertical_concatenate = np.concatenate(frames_l_with_features, axis=0)
 
     frames_r_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in

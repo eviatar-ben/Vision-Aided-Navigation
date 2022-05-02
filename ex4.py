@@ -116,7 +116,7 @@ def main():
     # 4.2
     db.present_statistics()
     # 4.3
-    track = get_track_in_len(db, 10)
+    track = get_track_in_len(db, 11)
     exs_plots.display_track(db, track)
 
 
