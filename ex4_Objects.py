@@ -71,6 +71,10 @@ class DataBase:
         print(f"Min track len is : {min_track_len}")
         print(f"Mean track len is : {mean_track_len}")
 
+    def set_inliers_per(self, inliers_pers):
+        for inliers_per, frame in zip(inliers_pers, self.frames.values()):
+            frame.inliers_per = inliers_per
+
 
 class Track:
     track_id_counter = 0
@@ -105,6 +109,7 @@ class Frame:
         # which tracks going through this frame maybe dictionary is needed {frame: kp in frame_id frame}
         self.tracks_to_features = {}  # {track_id : feature}
         self.outgoing = 0
+        self.inliers_per = None
 
         Frame.frame_id_counter += 1
 
@@ -122,4 +127,3 @@ class Feature:
         self.xr = xr
         self.y = y
         self.matched_feature = matched_feature  # {idx_l0:idx_l1}:
-

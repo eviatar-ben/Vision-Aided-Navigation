@@ -287,18 +287,18 @@ def display_track(db, track):
                             db.get_feature_location(frame_id, track.track_id)[2]))
 
     # todo check if its possible to avoid truncate the coordinates
-    frames_l_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
-                              zip(frames_l, frames_l_xy)]
+    frames_l_with_features = [cv2.circle(frame, (int(round(xy[0])), int(round(xy[1]))), 1, (255, 0, 0), 5) for frame, xy
+                              in zip(frames_l, frames_l_xy)]
     l_vertical_concatenate = np.concatenate(frames_l_with_features, axis=0)
 
-    frames_r_with_features = [cv2.circle(frame, (int(xy[0]), int(xy[1])), 1, (255, 0, 0), 5) for frame, xy in
-                              zip(frames_r, frames_r_xy)]
+    frames_r_with_features = [cv2.circle(frame, (int(round(xy[0])), int(round(xy[1]))), 1, (255, 0, 0), 5) for frame, xy
+                              in zip(frames_r, frames_r_xy)]
     r_vertical_concatenate = np.concatenate(frames_r_with_features, axis=0)
 
     l_r_concatenate = np.concatenate([l_vertical_concatenate, r_vertical_concatenate], axis=1)
 
-    cv2.imwrite(r'plots\ex4\track_r' + str(track.track_id) + '.jpg', r_vertical_concatenate)
-    cv2.imwrite(r'plots\ex4\track_l' + str(track.track_id) + '.jpg', l_vertical_concatenate)
+    # cv2.imwrite(r'plots\ex4\track_r' + str(track.track_id) + '.jpg', r_vertical_concatenate)
+    # cv2.imwrite(r'plots\ex4\track_l' + str(track.track_id) + '.jpg', l_vertical_concatenate)
     cv2.imwrite(r'plots\ex4\track_lr' + str(track.track_id) + '.jpg', l_r_concatenate)
 
 
@@ -326,12 +326,22 @@ def connectivity_graph(frames):
     plt.savefig(r"plots\ex4\Connectivity_Graph.png")
 
 
-def present_inliers_per_frame_percentage():
+def present_inliers_per_frame_percentage(frames):
     """
     Present a graph of the percentage of inliers per frame
+    number of supporters after consensus match / stereo matches
     :return:
     """
-    pass
+    inliers_pers = [frame.inliers_per for frame in frames]
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    ax.set_title("Inliers percentage: ")
+    plt.plot(np.asarray(inliers_pers))
+    plt.ylabel('Inliers percentage')
+    plt.xlabel('Frame id')
+
+    fig.savefig(r"plots\ex4\Inliers percentage.png")
+    plt.close(fig)
 
 
 def present_track_len_histogram(tracks):

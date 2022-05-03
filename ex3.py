@@ -1,9 +1,7 @@
 import cv2
 import numpy as np
-import pandas as pd
 import ex1
 import ex2
-import ex3_tests
 import exs_plots
 import time
 import pickle
@@ -11,7 +9,6 @@ import pickle
 THRESH = 2
 RANDOM_FACTOR = 16
 FRAMES_NUM = 3450
-
 
 k, km1, km2, m1, m2 = ex2.get_camera_mat()
 
@@ -205,7 +202,8 @@ def one_shot(i):
     first_frame_kp, second_frame_kp, supporters_matches01p = \
         get_l0_kp_in_frame(supporters_idx[0], mutual_matches_ind_l1, mutual_matches_ind_l0, matches01p,
                            matches00p, matches11p, kp_l0, kp_r0, kp_l1, kp_r1)
-    return Rt, first_frame_kp, second_frame_kp, supporters_matches01p
+    inliers_per = len(supporters_idx[0]) / len(mutual_matches_ind_l0)   # supporters / consensus match
+    return Rt, first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per
 
 
 def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind_l0, matches01p, matches00p, matches11p,
@@ -237,9 +235,9 @@ def play(stop, pickling=True):
         for i in range(0, stop - 1):
             if i in [i for i in range(1, 3450, 50)]:
                 print(i)
-            Rt, first_frame_kp, second_frame_kp, supporters_matches01p = one_shot(i)
+            Rt, first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per = one_shot(i)
             rts_path.append(Rt)
-            tracks_data.append([first_frame_kp, second_frame_kp, supporters_matches01p])
+            tracks_data.append([first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per])
 
     def compute_relative_transformation():
         def get_composition(trans1, trans2):
@@ -268,15 +266,15 @@ def play(stop, pickling=True):
     compute_positions()
     if pickling:
         tracks_data_with_points = []
-        for data in tracks_data:
-            first_frame_kp, second_frame_kp, supporters_matches01p = data[0], data[1], data[2]
+        for i, data in enumerate(tracks_data):
+            first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per = data[0], data[1], data[2], data[3]
 
             first_frame_p = cv2.KeyPoint_convert(np.asarray(first_frame_kp[0])), \
-                cv2.KeyPoint_convert(np.asarray(first_frame_kp[1]))
+                            cv2.KeyPoint_convert(np.asarray(first_frame_kp[1]))
             second_frame_p = cv2.KeyPoint_convert(np.asarray(second_frame_kp[0])), cv2.KeyPoint_convert(
                 np.asarray(second_frame_kp[0]))
 
-            tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p])
+            tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p, inliers_per])
 
         pickle_out = open(r"ex4_pickles\tracks_data.pickle", "wb")
         pickle.dump(tracks_data_with_points, pickle_out)

@@ -93,8 +93,10 @@ def build_data(data_pickled_already=True):
     db = DataBase()
     prev_frame = None
     first_frame = Frame()
+    inliers_pers = []
 
     for track_data in tracks_data:
+        inliers_pers.append(track_data[3])
         first_frame_kps, second_frame_kps, supporters_matches01p = track_data[0], track_data[1], track_data[2]
         l0_points, r0_points = first_frame_kps
         l1_points, r1_points = second_frame_kps
@@ -104,6 +106,8 @@ def build_data(data_pickled_already=True):
             cur_frame = Frame()
             extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame)
             prev_frame = cur_frame
+
+    db.set_inliers_per(inliers_pers)
 
     return db
 
@@ -122,7 +126,7 @@ def main():
     # 4.4
     exs_plots.connectivity_graph(db.frames.values())
     # 4.5
-    exs_plots.present_inliers_per_frame_percentage()
+    exs_plots.present_inliers_per_frame_percentage(db.frames.values())
     # 4.6
     exs_plots.present_track_len_histogram(db.tracks)
 
