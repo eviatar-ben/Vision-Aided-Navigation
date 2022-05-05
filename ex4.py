@@ -9,6 +9,8 @@ import numpy as np
 FRAMES_NUM = 3450
 
 
+# todo: problem with the right stereo match. maybe the problem is different key points  slipping in
+
 # todo: check whether last frame is not been considered?
 def get_tracks_data(data_pickled_already):
     if not data_pickled_already:
@@ -119,17 +121,20 @@ def main():
     # 4.1
     db = build_data()
     # 4.2
-    db.present_statistics()
+    # db.present_statistics()
     # 4.3
-    track = utilities.get_track_in_len(db, 20)
+    track = utilities.get_track_in_len(db, 10, True)
     exs_plots.display_track(db, track)
-    # 4.4
-    exs_plots.connectivity_graph(db.frames.values())
-    # 4.5
-    exs_plots.present_inliers_per_frame_percentage(db.frames.values())
-    # 4.6
-    exs_plots.present_track_len_histogram(db.tracks)
+    # # 4.4
+    # exs_plots.connectivity_graph(db.frames.values())
+    # # 4.5
+    # exs_plots.present_inliers_per_frame_percentage(db.frames.values())
+    # # 4.6
+    # exs_plots.present_track_len_histogram(db.tracks)
+    # 4.7
+    exs_plots.present_reprojection_error(db, track)
 
 
 if __name__ == '__main__':
+    # exs_plots.plot_ground_truth_2d()
     main()

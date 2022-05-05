@@ -144,14 +144,14 @@ def triangulation(in_liers, m1c, m2c):
 def cv2_triangulation(in_liers, m1c, m2c):
     def edit_to_pt():
         for i, j in zip(in_liers[0], in_liers[1]):
-            points1.append(i.pt)
-            points2.append(j.pt)
+            left_points.append(i.pt)
+            right_points.append(j.pt)
 
-    points1 = []
-    points2 = []
+    left_points = []
+    right_points = []
     edit_to_pt()
 
-    ps = cv2.triangulatePoints(m1c, m2c, np.array(points1).T, np.array(points2).T).T
+    ps = cv2.triangulatePoints(m1c, m2c, np.array(left_points).T, np.array(right_points).T).T
     return np.squeeze(cv2.convertPointsFromHomogeneous(ps))
 
 

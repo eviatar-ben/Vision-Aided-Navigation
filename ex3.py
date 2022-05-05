@@ -87,6 +87,9 @@ def projection(ext_l1, ext_r1, p3d):
     return pl1, pr1
 
 
+
+
+
 def transform3dp(p3d):
     return np.column_stack([p3d, np.ones(len(p3d))])
 
@@ -202,7 +205,7 @@ def one_shot(i):
     first_frame_kp, second_frame_kp, supporters_matches01p = \
         get_l0_kp_in_frame(supporters_idx[0], mutual_matches_ind_l1, mutual_matches_ind_l0, matches01p,
                            matches00p, matches11p, kp_l0, kp_r0, kp_l1, kp_r1)
-    inliers_per = len(supporters_idx[0]) / len(mutual_matches_ind_l0)   # supporters / consensus match
+    inliers_per = len(supporters_idx[0]) / len(mutual_matches_ind_l0)  # supporters / consensus match
     return Rt, first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per
 
 

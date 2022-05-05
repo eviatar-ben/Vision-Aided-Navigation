@@ -3,9 +3,7 @@ import cv2
 import numpy as np
 from ex4 import FRAMES_NUM
 
-GROUND_TRUTH_PATH = r"../dataset/poses/00.txt"
-DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
-FIRST_IMAGE = 000000
+import utilities
 
 
 # -----------------------------------------------------3----------------------------------------------------------------
@@ -212,23 +210,7 @@ def draw_left_cam_3d_trajectory(positions):
 
 
 def plot_both_trajectories(left_camera_positions):
-    def get_ground_truth_transformations2(left_cam_trans_path=GROUND_TRUTH_PATH):
-        def relative(t):
-            return -1 * t[:, :3].T @ t[:, 3]
-
-        ground_truth_trans = []
-        with open(left_cam_trans_path) as f:
-            lines = f.readlines()
-        for i in range(3450):
-            left_mat = np.array(lines[i].split(" "))[:-1].astype(float).reshape((3, 4))
-            ground_truth_trans.append(left_mat)
-
-        relative_cameras_pos_arr = []
-        for t in ground_truth_trans:
-            relative_cameras_pos_arr.append(relative(t))
-        return np.array(relative_cameras_pos_arr)
-
-    ground_truth_positions = get_ground_truth_transformations2()
+    ground_truth_positions, _ = utilities.get_ground_truth_positions_and_transformations()
     fig = plt.figure()
 
     ax = fig.add_subplot()
@@ -242,23 +224,7 @@ def plot_both_trajectories(left_camera_positions):
 
 
 def plot_ground_truth_2d():
-    def get_ground_truth_transformations2(left_cam_trans_path=GROUND_TRUTH_PATH):
-        def relative(t):
-            return -1 * t[:, :3].T @ t[:, 3]
-
-        ground_truth_trans = []
-        with open(left_cam_trans_path) as f:
-            lines = f.readlines()
-        for i in range(3450):
-            left_mat = np.array(lines[i].split(" "))[:-1].astype(float).reshape((3, 4))
-            ground_truth_trans.append(left_mat)
-
-        relative_cameras_pos_arr = []
-        for t in ground_truth_trans:
-            relative_cameras_pos_arr.append(relative(t))
-        return np.array(relative_cameras_pos_arr)
-
-    ground_truth_positions = get_ground_truth_transformations2()
+    ground_truth_positions, _ = utilities.get_ground_truth_positions_and_transformations()
     fig = plt.figure()
 
     ax = fig.add_subplot()
@@ -270,29 +236,14 @@ def plot_ground_truth_2d():
 
 
 # -----------------------------------------------------4----------------------------------------------------------------
+# 4.3
 def display_track(db, track):
-    frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
-    frames_path = ['{:06d}.png'.format(FIRST_IMAGE + frame.frame_id) for frame in track.frames_by_ids.values()]
-    frames_l = [cv2.imread(DATA_PATH + 'image_0/' + frame_path) for frame_path in frames_path]
-    frames_r = [cv2.imread(DATA_PATH + 'image_1/' + frame_path) for frame_path in frames_path]
+    # todo: check weather the image and the xy coordinate are corresponding to each other (maybe 1 image shift?)
 
-    frames_l_xy = []
-    for frame_id in frame_ids:
-        frames_l_xy.append((db.get_feature_location(frame_id, track.track_id)[0],
-                            db.get_feature_location(frame_id, track.track_id)[2]))
+    frames_l, frames_r, _, _, frames_l_with_features, frames_r_with_features = \
+        utilities.get_track_frames_with_and_without_features(db, track)
 
-    frames_r_xy = []
-    for frame_id in frame_ids:
-        frames_r_xy.append((db.get_feature_location(frame_id, track.track_id)[1],
-                            db.get_feature_location(frame_id, track.track_id)[2]))
-
-    # todo check if its possible to avoid truncate the coordinates
-    frames_l_with_features = [cv2.circle(frame, (int(round(xy[0])), int(round(xy[1]))), 1, (255, 0, 0), 5) for frame, xy
-                              in zip(frames_l, frames_l_xy)]
     l_vertical_concatenate = np.concatenate(frames_l_with_features, axis=0)
-
-    frames_r_with_features = [cv2.circle(frame, (int(round(xy[0])), int(round(xy[1]))), 1, (255, 0, 0), 5) for frame, xy
-                              in zip(frames_r, frames_r_xy)]
     r_vertical_concatenate = np.concatenate(frames_r_with_features, axis=0)
 
     l_r_concatenate = np.concatenate([l_vertical_concatenate, r_vertical_concatenate], axis=1)
@@ -302,6 +253,7 @@ def display_track(db, track):
     cv2.imwrite(r'plots\ex4\track_lr' + str(track.track_id) + '.jpg', l_r_concatenate)
 
 
+# 4.4
 def connectivity_graph(frames):
     """
     Present a connectivity graph: For each frame, the number of tracks outgoing to the next
@@ -326,6 +278,7 @@ def connectivity_graph(frames):
     plt.savefig(r"plots\ex4\Connectivity_Graph.png")
 
 
+# 4.5
 def present_inliers_per_frame_percentage(frames):
     """
     Present a graph of the percentage of inliers per frame
@@ -344,6 +297,7 @@ def present_inliers_per_frame_percentage(frames):
     plt.close(fig)
 
 
+# 4.6
 def present_track_len_histogram(tracks):
     """
      Present a track length histogram graph
@@ -360,4 +314,48 @@ def present_track_len_histogram(tracks):
     plt.xlabel('Track lengths')
 
     fig.savefig(r"plots\ex4\Track length histogram.png")
+    plt.close(fig)
+
+
+# 4.7
+def present_reprojection_error(db, track):
+    frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
+    frames_l, frames_r, frames_l_xy, frames_r_xy, _, _ = utilities.get_track_frames_with_and_without_features(db, track)
+    _, gt_trans = utilities.get_ground_truth_positions_and_transformations(seq=(frame_ids[0], frame_ids[-1] + 1))
+    # _, gt_trans = utilities.get_ground_truth_positions_and_transformations(seq=(frame_ids[0], frame_ids[-1]))
+
+    last_left_img_xy = frames_l_xy[-1]
+    last_right_img_xy = frames_r_xy[-1]
+
+    last_left_trans = gt_trans[-1]
+    last_l_projection_mat = utilities.K @ last_left_trans
+    last_r_projection_mat = utilities.K @ utilities.get_composition(last_left_trans, utilities.M2)
+    p3d = utilities.xy_triangulation([last_left_img_xy, last_right_img_xy], last_l_projection_mat,
+                                     last_r_projection_mat)
+
+    left_projections = []
+    right_projections = []
+
+    for trans in gt_trans:
+        left_proj_cam = utilities.K @ trans
+        right_proj_cam = utilities.K @ utilities.get_composition(trans, utilities.M2)
+
+        left_proj = utilities.project(p3d, left_proj_cam)
+        right_proj = utilities.project(p3d, right_proj_cam)
+
+        left_projections.append(left_proj)
+        right_projections.append(right_proj)
+
+    left_proj_dist = utilities.get_euclidean_distance(np.array(left_projections), np.array(frames_l_xy))
+    right_proj_dist = utilities.get_euclidean_distance(np.array(right_projections), np.array(frames_r_xy))
+    total_proj_dist = (left_proj_dist + right_proj_dist) / 2
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    ax.set_title(f"Reprojection error for track: {track.track_id}")
+    plt.scatter(range(len(total_proj_dist)), total_proj_dist)
+    plt.ylabel('Error')
+    plt.xlabel('Frames')
+
+    fig.savefig(f"plots\ex4\Reprojection error {track.track_id}.png")
     plt.close(fig)
