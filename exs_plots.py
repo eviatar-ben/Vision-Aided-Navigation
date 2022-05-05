@@ -237,11 +237,11 @@ def plot_ground_truth_2d():
 
 # -----------------------------------------------------4----------------------------------------------------------------
 # 4.3
-def display_track(db, track):
+def display_track(db, track, crop=True):
     # todo: check weather the image and the xy coordinate are corresponding to each other (maybe 1 image shift?)
 
     frames_l, frames_r, _, _, frames_l_with_features, frames_r_with_features = \
-        utilities.get_track_frames_with_and_without_features(db, track)
+        utilities.get_track_frames_with_and_without_features(db, track, crop=crop)
 
     l_vertical_concatenate = np.concatenate(frames_l_with_features, axis=0)
     r_vertical_concatenate = np.concatenate(frames_r_with_features, axis=0)
@@ -320,7 +320,7 @@ def present_track_len_histogram(tracks):
 # 4.7
 def present_reprojection_error(db, track):
     frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
-    frames_l, frames_r, frames_l_xy, frames_r_xy, _, _ = utilities.get_track_frames_with_and_without_features(db, track)
+    _, _, frames_l_xy, frames_r_xy, _, _ = utilities.get_track_frames_with_and_without_features(db, track)
     _, gt_trans = utilities.get_ground_truth_positions_and_transformations(seq=(frame_ids[0], frame_ids[-1] + 1))
     # _, gt_trans = utilities.get_ground_truth_positions_and_transformations(seq=(frame_ids[0], frame_ids[-1]))
 
@@ -357,5 +357,5 @@ def present_reprojection_error(db, track):
     plt.ylabel('Error')
     plt.xlabel('Frames')
 
-    fig.savefig(f"plots\ex4\Reprojection error {track.track_id}.png")
+    fig.savefig(f"plots/ex4/reprojection_error/Reprojection error {track.track_id}.png")
     plt.close(fig)

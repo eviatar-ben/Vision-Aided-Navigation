@@ -4,8 +4,8 @@ import numpy as np
 GROUND_TRUTH_PATH = r"../dataset/poses/00.txt"
 DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
 FIRST_IMAGE = 000000
-IMAGE_WIDTH = 100
-IMAGE_HEIGHT = 100
+IMAGE_WIDTH = 1241
+IMAGE_HEIGHT = 376
 FRAMES_NUM = 3450
 
 
@@ -132,7 +132,7 @@ def get_track_in_len(db, track_min_len, rand=False):
         if len(tracks[idx]) == track_min_len:
             track = tracks[idx]
             found = True
-    return tracks[4833]
+    return tracks[2421]
     # return track
 
 
@@ -146,10 +146,10 @@ def crop_image(xy, img, crop_size):
     u_y = int(max(0, xy[1] - crop_size))
     d_y = int(min(IMAGE_HEIGHT, xy[1] + crop_size))
 
-    return img[u_y: d_y, l_x: r_x], [crop_size, crop_size]
+    return img[u_y: d_y, l_x: r_x]
 
 
-def get_track_frames_with_and_without_features(db, track):
+def get_track_frames_with_and_without_features(db, track, crop=False):
     """
     given database and track the function will return an array of images (frames)
     of the corresponding track both left and right frames,
@@ -179,6 +179,11 @@ def get_track_frames_with_and_without_features(db, track):
 
     frames_r_with_features = [cv2.circle(frame, (int(round(xy[0])), int(round(xy[1]))), 1, (0, 0, 255), 5) for frame, xy
                               in zip(frames_r, frames_r_xy)]
+    if crop:
+        frames_l_with_features = [crop_image(xy, image, 100) for xy, image in
+                                  zip(frames_l_xy, frames_l_with_features)]
+        frames_r_with_features = [crop_image(xy, image, 100) for xy, image in
+                                  zip(frames_r_xy, frames_r_with_features)]
 
     return frames_l, frames_r, frames_l_xy, frames_r_xy, frames_l_with_features, frames_r_with_features
 
