@@ -98,6 +98,7 @@ def build_data(data_pickled_already=True):
     inliers_pers = []
 
     for track_data in tracks_data:
+        # inliers are not per frame???
         inliers_pers.append(track_data[3])
         first_frame_kps, second_frame_kps, supporters_matches01p = track_data[0], track_data[1], track_data[2]
         l0_points, r0_points = first_frame_kps
@@ -123,7 +124,7 @@ def main():
     # 4.2
     db.present_statistics()
     # 4.3
-    track = utilities.get_track_in_len(db, 10, True)
+    track = utilities.get_track_in_len(db, 50, False)
     exs_plots.display_track(db, track, crop=False)
     # 4.4
     # exs_plots.connectivity_graph(db.frames.values())

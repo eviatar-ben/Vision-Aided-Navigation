@@ -87,9 +87,6 @@ def projection(ext_l1, ext_r1, p3d):
     return pl1, pr1
 
 
-
-
-
 def transform3dp(p3d):
     return np.column_stack([p3d, np.ones(len(p3d))])
 
@@ -200,6 +197,7 @@ def one_shot(i):
     # supporters_idx = get_maximal_group(p3d, mutual_kp_l1, np.asarray(point_l1), np.asarray(point_r1))
     supporters_idx = online_ransac(p3d, mutual_kp_l1, np.asarray(point_l1), np.asarray(point_r1))
     # supporters_idx is indices relevant to mutual_kp_l1
+    # todo supporters_idx is indices relevant to mutual_kp_l1 are not relevant to kp_l0??
     Rt = refine_transformation(supporters_idx, p3d, mutual_kp_l1)
 
     first_frame_kp, second_frame_kp, supporters_matches01p = \
@@ -211,10 +209,14 @@ def one_shot(i):
 
 def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind_l0, matches01p, matches00p, matches11p,
                        kp_l0, kp_r0, kp_l1, kp_r1, sanity_check=False):
+    matches10p = {val: key for key, val in matches01p.items()}  # reverse 01 to 10
+    # todo: check this out- bugs prone
+    # 1. supporters_idx are relevant to l1
+    # 2. [matches00p[i] for i in mutual_matches_ind_l0] need to be changed
     mutual_supporters_idx_matches_ind_l0 = [mutual_matches_ind_l0[i] for i in supporters_idx]
-    mutual_supporters_idx_matches_ind_r0 = [matches00p[i] for i in mutual_matches_ind_l0]
+    mutual_supporters_idx_matches_ind_r0 = [matches00p[i] for i in mutual_supporters_idx_matches_ind_l0]
     mutual_supporters_idx_matches_ind_l1 = [mutual_matches_ind_l1[i] for i in supporters_idx]
-    mutual_supporters_idx_matches_ind_r1 = [matches11p[i] for i in mutual_matches_ind_l1]
+    mutual_supporters_idx_matches_ind_r1 = [matches11p[i] for i in mutual_supporters_idx_matches_ind_l1]
 
     if sanity_check:
         for i, j in zip(mutual_matches_ind_l0, mutual_matches_ind_l1):

@@ -132,8 +132,8 @@ def get_track_in_len(db, track_min_len, rand=False):
         if len(tracks[idx]) == track_min_len:
             track = tracks[idx]
             found = True
-    return tracks[2421]
-    # return track
+    # return tracks[2421]
+    return track
 
 
 def crop_image(xy, img, crop_size):
