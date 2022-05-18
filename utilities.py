@@ -126,12 +126,12 @@ def get_track_in_len(db, track_min_len, rand=False):
         for track in tracks:
             if len(track) >= track_min_len:
                 return track
-
-    while not found:
-        idx = random.randint(0, len(tracks) - 1)
-        if len(tracks[idx]) == track_min_len:
-            track = tracks[idx]
-            found = True
+    else:
+        while not found:
+            idx = random.randint(0, len(tracks) - 1)
+            if len(tracks[idx]) == track_min_len:
+                track = tracks[idx]
+                found = True
     # return tracks[2421]
     return track
 

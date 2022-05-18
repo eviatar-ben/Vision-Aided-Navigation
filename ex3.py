@@ -242,7 +242,7 @@ def play(stop, pickling=True):
                 print(i)
             Rt, first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per = one_shot(i)
             rts_path.append(Rt)
-            tracks_data.append([first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per])
+            tracks_data.append([first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per, Rt])
 
     def compute_relative_transformation():
         def get_composition(trans1, trans2):
@@ -272,14 +272,15 @@ def play(stop, pickling=True):
     if pickling:
         tracks_data_with_points = []
         for i, data in enumerate(tracks_data):
-            first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per = data[0], data[1], data[2], data[3]
+            first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per, Rt = \
+                data[0], data[1], data[2], data[3], data[4]
 
             first_frame_p = cv2.KeyPoint_convert(np.asarray(first_frame_kp[0])), \
                             cv2.KeyPoint_convert(np.asarray(first_frame_kp[1]))
             second_frame_p = cv2.KeyPoint_convert(np.asarray(second_frame_kp[0])), cv2.KeyPoint_convert(
                 np.asarray(second_frame_kp[0]))
 
-            tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p, inliers_per])
+            tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p, inliers_per, Rt])
 
         pickle_out = open(r"ex4_pickles\tracks_data.pickle", "wb")
         pickle.dump(tracks_data_with_points, pickle_out)

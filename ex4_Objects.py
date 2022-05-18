@@ -110,6 +110,7 @@ class Frame:
         self.tracks_to_features = {}  # {track_id : feature}
         self.outgoing = 0
         self.inliers_per = None
+        self.extrinsic_mat = None
 
         Frame.frame_id_counter += 1
 
@@ -118,6 +119,9 @@ class Frame:
 
     def get_feature(self, track_id):
         return self.tracks_to_features[track_id]
+
+    def set_extrinsic_mat(self, ext):
+        self.extrinsic_mat = ext  # for bundle adjustment
 
 
 class Feature:

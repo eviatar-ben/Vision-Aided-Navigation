@@ -37,7 +37,7 @@ def convert_data_kp_to_xy_point(tracks_data):
     return converted_data_xy_points
 
 
-def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame):
+def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame, Rt):
     db.last_matches = supporters_matches01p
     for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
         cur_l0, cur_l1 = matched_feature
@@ -49,13 +49,14 @@ def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01
         first_frame.add_feature(track.track_id, feature)
 
         db.add_track(track)
+    first_frame.set_extrinsic_mat(Rt)  # for bundle adjustment
     # in frame 0 all features are outgoing
     first_frame.outgoing = len(supporters_matches01p)
     db.add_frame(first_frame)
     return first_frame
 
 
-def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame):
+def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame, Rt):
     # prev_l1_match is the last match in the previous frame:
     cur_frame_outgoing = 1  # consider the first frame
     for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
@@ -84,6 +85,8 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
 
             db.add_track(track)
             # print(f"new track: {track.track_id} with length {len(track)}")
+
+    cur_frame.set_extrinsic_mat(Rt)  # for bundle adjustment
     cur_frame.outgoing = cur_frame_outgoing
     db.add_frame(cur_frame)
 
@@ -101,13 +104,14 @@ def build_data(data_pickled_already=True):
         # inliers are not per frame???
         inliers_pers.append(track_data[3])
         first_frame_kps, second_frame_kps, supporters_matches01p = track_data[0], track_data[1], track_data[2]
+        Rt = track_data[4]
         l0_points, r0_points = first_frame_kps
         l1_points, r1_points = second_frame_kps
         if not db.last_matches:
-            prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame)
+            prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame, Rt)
         else:
             cur_frame = Frame()
-            extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame)
+            extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame, Rt)
             prev_frame = cur_frame
 
     db.set_inliers_per(inliers_pers)
@@ -124,7 +128,7 @@ def main():
     # 4.2
     db.present_statistics()
     # 4.3
-    track = utilities.get_track_in_len(db, 11, True)
+    track = utilities.get_track_in_len(db, 11, False)
     exs_plots.display_track(db, track, crop=False)
     # 4.4
     # exs_plots.connectivity_graph(db.frames.values())
