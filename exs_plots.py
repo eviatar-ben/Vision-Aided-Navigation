@@ -4,6 +4,7 @@ import numpy as np
 
 # from ex4 import FRAMES_NUM
 import utilities
+
 FRAMES_NUM = 3450
 
 
@@ -359,4 +360,26 @@ def present_reprojection_error(db, track):
     plt.xlabel('Frames')
 
     fig.savefig(f"plots/ex4/reprojection_error/Reprojection error {track.track_id}.png")
+    plt.close(fig)
+
+
+# -----------------------------------------------------5----------------------------------------------------------------
+
+# 5.1
+def present_gtsam_re_projection_track_error(projected, measured, track_id):
+    left_projections, right_projections = projected[0], projected[1]
+    frames_l_xy, frames_r_xy = measured[0], measured[1]
+
+    left_proj_dist = utilities.get_euclidean_distance(np.array(left_projections), np.array(frames_l_xy))
+    right_proj_dist = utilities.get_euclidean_distance(np.array(right_projections), np.array(frames_r_xy))
+    total_proj_dist = (left_proj_dist + right_proj_dist) / 2
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    ax.set_title(f"Reprojection error for track: {track_id}")
+    plt.scatter(range(len(total_proj_dist)), total_proj_dist)
+    plt.ylabel('Error')
+    plt.xlabel('Frames')
+
+    fig.savefig(f"plots/ex4/gtsam_reprojection_error/gtsam_reprojection_track_error {track_id}.png")
     plt.close(fig)

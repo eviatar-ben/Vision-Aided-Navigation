@@ -205,7 +205,7 @@ def compute_reprojection_euclidean_dist(img_projected_pts, img_pts_coor):
     return np.sqrt(left0_squared_dist)
 
 
-# -----------------------------------------------------4----------------------------------------------------------------
+# -----------------------------------------------------5----------------------------------------------------------------
 
 def reverse_ext(ext):
     """
@@ -218,3 +218,26 @@ def reverse_ext(ext):
     rev_R = R.T
     rev_t = -rev_R @ t
     return np.hstack((rev_R, rev_t.reshape(3, 1)))
+
+
+def get_track_frames_with_features(db, track):
+    """
+    given database and track the function will return an array of images (frames)
+    of the corresponding track both left and right frames,
+    and both frames with the features loaded in the frames
+    :param db:
+    :param track:
+    :return:
+    """
+    frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
+    frames_l_xy = []
+    for frame_id in frame_ids:
+        frames_l_xy.append((db.get_feature_location(frame_id, track.track_id)[0],
+                            db.get_feature_location(frame_id, track.track_id)[2]))
+
+    frames_r_xy = []
+    for frame_id in frame_ids:
+        frames_r_xy.append((db.get_feature_location(frame_id, track.track_id)[1],
+                            db.get_feature_location(frame_id, track.track_id)[2]))
+
+    return frames_l_xy, frames_r_xy
