@@ -6,8 +6,8 @@ import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
 
-IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
-DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
+IMAGE_PATH = r'..\docs'
+DATA_PATH = r'../dataset/sequences/00/'
 FIRST_IMAGE = 000000
 SECOND_IMAGE = 0o00001
 THRESH = 2
