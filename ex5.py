@@ -75,7 +75,7 @@ def triangulate_and_project(db, track, frames, gtsam_frames):
 
 def triangulate_from_last_frame_and_project_to_all_frames():
     db = ex4.build_data()
-    track = utilities.get_track_in_len(db, 10, False)
+    track = utilities.get_track_in_len(db, 20, False)
     frames = track.frames_by_ids.values()
 
     # define gtsam.StereoCamera for each frame in track:
