@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 GROUND_TRUTH_PATH = r"../dataset/poses/00.txt"
-DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
+DATA_PATH = r'../dataset/sequences/00/'
 FIRST_IMAGE = 000000
 IMAGE_WIDTH = 1241
 IMAGE_HEIGHT = 376

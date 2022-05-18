@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
-from ex4 import FRAMES_NUM
 
+# from ex4 import FRAMES_NUM
 import utilities
+FRAMES_NUM = 3450
 
 
 # -----------------------------------------------------3----------------------------------------------------------------
