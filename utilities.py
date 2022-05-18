@@ -203,3 +203,18 @@ def compute_reprojection_square_dist(img_projected_pts, img_pts_coor):
 def compute_reprojection_euclidean_dist(img_projected_pts, img_pts_coor):
     left0_squared_dist = compute_reprojection_square_dist(img_projected_pts, img_pts_coor)
     return np.sqrt(left0_squared_dist)
+
+
+# -----------------------------------------------------4----------------------------------------------------------------
+
+def reverse_ext(ext):
+    """
+    this function gets an extrinsic matrix  world coord -> camera coord
+    and return the "opposite" camera coord -> world coord
+    """
+    R = ext[:, :3]
+    t = ext[:, 3]
+
+    rev_R = R.T
+    rev_t = -rev_R @ t
+    return np.hstack((rev_R, rev_t.reshape(3, 1)))

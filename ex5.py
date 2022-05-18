@@ -34,7 +34,6 @@ def f():
     frames = track.frames_by_ids.values()
     gtsam_frames = get_gtsam_frames(frames)
 
-
 if __name__ == '__main__':
-    # 5.1
+    #5.1
     f()
