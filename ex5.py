@@ -104,13 +104,17 @@ def adjust_bundle(db, keyframe1, keyframe2, window_siz=10):
 
     graph.add(gtsam.PriorFactorPose3(symbol('c', keyframe1), gtsam.Pose3(), pose_noise))
 
-    frames_in_bundle = set()
+    tracks_id_in_bundle = set()
     for frame_id in range(keyframe1, keyframe2):
         camera_relative_pose = None
         initial_estimate.insert(symbol('c', frame_id), camera_relative_pose)
 
         for track_id in db.get_tracks_ids_in_frame(frame_id):
-            frames_in_bundle.add(track_id)
+            tracks_id_in_bundle.add(track_id)
+            factor = get_factor()
+            graph.add(factor)
+    for track_id in tracks_id_in_bundle:
+        pass
 
 
     optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate)
@@ -123,4 +127,5 @@ if __name__ == '__main__':
     # 5.1
     triangulate_from_last_frame_and_project_to_all_frames(db)
     # 5.2
-    adjust_bundle(db, 0, 10)
+    graph, result = adjust_bundle(db, 0, 10)
+
