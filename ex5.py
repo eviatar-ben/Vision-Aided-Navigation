@@ -69,13 +69,14 @@ def triangulate_and_project(db, track, frames, gtsam_frames):
                  projected_features_in_frames_r_xy]
     measured = [features_in_frames_l_xy,
                 features_in_frames_r_xy]
+    #todo: check weather the order is corresponding - its probbably revered in one of them
     present_gtsam_re_projection_track_error(projected, measured, track.track_id)
     return
 
 
 def triangulate_from_last_frame_and_project_to_all_frames():
     db = ex4.build_data()
-    track = utilities.get_track_in_len(db, 20, False)
+    track = utilities.get_track_in_len(db, 10, True)
     frames = track.frames_by_ids.values()
 
     # define gtsam.StereoCamera for each frame in track:

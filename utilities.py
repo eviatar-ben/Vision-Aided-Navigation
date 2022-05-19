@@ -231,12 +231,11 @@ def get_track_frames_with_features(db, track):
     """
     frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
     frames_l_xy = []
+    frames_r_xy = []
+
     for frame_id in frame_ids:
         frames_l_xy.append((db.get_feature_location(frame_id, track.track_id)[0],
                             db.get_feature_location(frame_id, track.track_id)[2]))
-
-    frames_r_xy = []
-    for frame_id in frame_ids:
         frames_r_xy.append((db.get_feature_location(frame_id, track.track_id)[1],
                             db.get_feature_location(frame_id, track.track_id)[2]))
 
