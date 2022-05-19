@@ -1,4 +1,5 @@
 import gtsam
+from gtsam import symbol
 import ex4
 import utilities
 
@@ -7,7 +8,7 @@ import utilities
 # todo check weather the Rt that's got from ex3 are corresponding to the frame
 #  (maybe there is a 1 shift between the frames and the Rts??)
 # todo: should i multiply by K?
-
+# todo: len of frames in track is len(track) - 1 : th last frame is needed to be appended
 
 def build_gtsam_frame(frame):
     reversed_ext = utilities.reverse_ext(frame.extrinsic_mat)
@@ -48,7 +49,7 @@ def get_gtsam_frames(frames):
 
 
 def triangulate_and_project(db, track, frames, gtsam_frames):
-    from  exs_plots import present_gtsam_re_projection_track_error
+    from exs_plots import present_gtsam_re_projection_track_error
 
     features_in_frames_l_xy, features_in_frames_r_xy = utilities.get_track_frames_with_features(db, track)
     last_frame_feature_l = features_in_frames_l_xy[-1]
@@ -69,14 +70,13 @@ def triangulate_and_project(db, track, frames, gtsam_frames):
                  projected_features_in_frames_r_xy]
     measured = [features_in_frames_l_xy,
                 features_in_frames_r_xy]
-    #todo: check weather the order is corresponding - its probbably revered in one of them
+    # todo: check weather the order is corresponding - its probbably revered in one of them
     present_gtsam_re_projection_track_error(projected, measured, track.track_id)
     return
 
 
-def triangulate_from_last_frame_and_project_to_all_frames():
-    db = ex4.build_data()
-    track = utilities.get_track_in_len(db, 10, True)
+def triangulate_from_last_frame_and_project_to_all_frames(db):
+    track = utilities.get_track_in_len(db, 10, False)
     frames = track.frames_by_ids.values()
 
     # define gtsam.StereoCamera for each frame in track:
@@ -86,6 +86,41 @@ def triangulate_from_last_frame_and_project_to_all_frames():
     triangulate_and_project(db, track, frames, gtsam_frames)
 
 
+def get_gtsam_k_matrix():
+    k = utilities.K
+    fx, fy, skew, cx, cy, b = k[0, 0], k[1, 1], k[0, 1], k[0, 2], k[1, 2], -utilities.M2[0, 3]
+    return gtsam.Cal3_S2Stereo(fx=fx, fy=fy, skew=skew, cx=cx, cy=cy, b=b)
+
+
+def get_factor():
+    pass
+
+
+def adjust_bundle(db, keyframe1, keyframe2, window_siz=10):
+    graph = gtsam.NonlinearFactorGraph()
+    initial_estimate = gtsam.Values()
+
+    pose_noise = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
+
+    graph.add(gtsam.PriorFactorPose3(symbol('c', keyframe1), gtsam.Pose3(), pose_noise))
+
+    frames_in_bundle = set()
+    for frame_id in range(keyframe1, keyframe2):
+        camera_relative_pose = None
+        initial_estimate.insert(symbol('c', frame_id), camera_relative_pose)
+
+        for track_id in db.get_tracks_ids_in_frame(frame_id):
+            frames_in_bundle.add(track_id)
+
+
+    optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate)
+    result = optimizer.optimize()
+    return graph, result
+
+
 if __name__ == '__main__':
+    db = ex4.build_data()
     # 5.1
-    triangulate_from_last_frame_and_project_to_all_frames()
+    triangulate_from_last_frame_and_project_to_all_frames(db)
+    # 5.2
+    adjust_bundle(db, 0, 10)

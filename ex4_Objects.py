@@ -28,7 +28,7 @@ class DataBase:
     def get_frame(self, frame_id, track_id):
         return self.tracks[track_id].get_frame(frame_id)
 
-    def get_tracks_in_frame(self, frame_id):
+    def get_tracks_ids_in_frame(self, frame_id):
         """function that returns all the TrackIds that appear on a given FrameId"""
         frame = self.frames[frame_id]
         return frame.tracks_to_features.keys()

@@ -381,5 +381,5 @@ def present_gtsam_re_projection_track_error(projected, measured, track_id):
     plt.ylabel('Error')
     plt.xlabel('Frames')
 
-    fig.savefig(f"plots/ex4/gtsam_reprojection_error/gtsam_reprojection_track_error {track_id}.png")
+    fig.savefig(fr"plots/ex4/gtsam_reprojection_error/gtsam_reprojection_track_error {track_id}.png")
     plt.close(fig)
