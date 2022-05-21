@@ -49,8 +49,8 @@ def get_gtsam_frames(frames):
 def get_gtsam_k_matrix():
     k = utilities.K
     fx, fy, skew, cx, cy, b = k[0, 0], k[1, 1], k[0, 1], k[0, 2], k[1, 2], -utilities.M2[0, 3]
-    gtsam_K  =  gtsam.Cal3_S2Stereo(fx=fx, fy=fy, skew=skew, cx=cx, cy=cy, b=b)
-    return  gtsam_K
+    return gtsam.Cal3_S2Stereo(fx, fy, skew, cx, cy, b)
+
 
 #
 # def get_factor(track_id, cam_id):
@@ -130,8 +130,9 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     # For each track create measurements factors
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inide the bundle?
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
-    # tracks_in_frame = [db.tracks[track.track_id] for track in tracks_ids_in_frame if track.get_last_frame() < keyframe2]
-    tracks_in_frame = [db.tracks[track.track_id] for track in tracks_ids_in_frame]
+    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
+                       db.tracks[track_id].get_last_frame_id() < keyframe2]
+    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
 
     for track in tracks_in_frame:
         # # Check that this track has bot been computed yet and that it's length is satisfied
@@ -195,4 +196,4 @@ if __name__ == '__main__':
     # 5.1
     triangulate_from_last_frame_and_project_to_all_frames(db)
     # 5.2
-    graph, result = adjust_bundle(db, 0, 10, [])
+    graph, result = adjust_bundle(db, 0, 4, [])
