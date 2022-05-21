@@ -59,10 +59,10 @@ def get_gtsam_k_matrix():
 #     a = gtsam.StereoPoint2(loc_on_cam[0][0], loc_on_cam[1][0], loc_on_cam[0][1])
 #     return gtsam.GenericStereoFactor3D(a, projection_uncertainty, symbol('c', cam_id), symbol('q', track_id), k)
 
-track, keyframe1, keyframe2, gtsam_last_cam, k
-def add_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from, gtsam_calib_mat,
-                frame_idx_triangulate=-1):
-    frames_in_track = Data.DB.get_frames()[first_frame_ind: last_frame_ind + 1]
+def add_track_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from, gtsam_calib_mat,
+                      initial_estimate):
+    # frames_in_track = [db.frames[frame.frame_id] for frame_id in db.frames[first_frame_ind: last_frame_ind + 1]
+    frames_in_track = [db.frames[frame_id] for frame_id in range(first_frame_ind, last_frame_ind)]
 
     # Track's locations in frames_in_window
     left_locations = track.get_left_locations_in_specific_frames(first_frame_ind, last_frame_ind)
@@ -80,9 +80,8 @@ def add_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_tr
     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
 
     # Add landmark symbol to "values" dictionary
-    p3d_sym = symbol(LAND_MARK_SYM, track.get_id())
-    self.__landmark_sym.add(p3d_sym)
-    self.__initial_estimate.insert(p3d_sym, gtsam_p3d)
+    p3d_sym = symbol('q', track.get_id())
+    initial_estimate.insert(p3d_sym, gtsam_p3d)
 
     for i, frame in enumerate(frames_in_track):
         # Measurement values
@@ -92,13 +91,13 @@ def add_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_tr
         # Factor creation
         projection_uncertainty = gtsam.noiseModel.Isotropic.Sigma(3, 1.0)
         factor = gtsam.GenericStereoFactor3D(gtsam_measurement_pt2, projection_uncertainty,
-                                             symbol(CAMERA_SYM, frame.frame_id), p3d_sym, gtsam_calib_mat)
+                                             symbol('c', frame.frame_id), p3d_sym, gtsam_calib_mat)
 
         # Add factor to the graph
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, window_siz=10):
+def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -109,36 +108,44 @@ def adjust_bundle(db, keyframe1, keyframe2, window_siz=10):
 
     frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2)]
     first_frame = frames_in_bundle[0]
+
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
     for frame_id, frame in zip(range(keyframe1, keyframe2), frames_in_bundle):
+        left_pose_symbol = symbol('C', frame.frame_id)
         # first frame
         if frame_id == keyframe1:
             first_pose = gtsam.Pose3()
-            graph.add(gtsam.PriorFactorPose3(symbol('c', keyframe1), first_pose, pose_uncertainty))
+            graph.add(gtsam.PriorFactorPose3(left_pose_symbol, first_pose, pose_uncertainty))
 
         # Compute transformation of : Rt(world - > cur cam) *Rt(first cam -> world) = Rt(first cam -> cur cam)
         camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
                                                                                frame.extrinsic_mat)
         # Convert this transformation to: cur cam -> first cam
         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
-        initial_estimate.insert(symbol('c', frame_id), cur_cam_pose)
+        initial_estimate.insert(left_pose_symbol, cur_cam_pose)
 
     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
 
     # For each track create measurements factors
-    tracks_in_frame = Data.DB.get_tracks_at_frame(first_frame.get_id())
+    # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inide the bundle?
+    tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
+    # tracks_in_frame = [db.tracks[track.track_id] for track in tracks_ids_in_frame if track.get_last_frame() < keyframe2]
+    tracks_in_frame = [db.tracks[track.track_id] for track in tracks_ids_in_frame]
 
     for track in tracks_in_frame:
         # # Check that this track has bot been computed yet and that it's length is satisfied
         # if track.get_id() in self.__computed_tracks or track.get_last_frame_ind() < self.__second_key_frame:
         #     continue
 
+        if track.track_id in computed_tracks:
+            continue
+
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
         gtsam_last_cam = gtsam.StereoCamera(gtsam_left_cam_pose, k)
-        add_factors(graph, track, keyframe1, keyframe2, gtsam_last_cam, k)  # Todo: as before
+        add_track_factors(graph, track, keyframe1, keyframe2, gtsam_last_cam, k, initial_estimate)  # Todo: as before
 
-        # computed_tracks.add(track.get_id())
+        computed_tracks.append(track.track_id)
     optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate)
     result = optimizer.optimize()
     return graph, result
@@ -188,4 +195,4 @@ if __name__ == '__main__':
     # 5.1
     triangulate_from_last_frame_and_project_to_all_frames(db)
     # 5.2
-    graph, result = adjust_bundle(db, 0, 10)
+    graph, result = adjust_bundle(db, 0, 10, [])
