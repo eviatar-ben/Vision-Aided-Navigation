@@ -65,8 +65,10 @@ def add_track_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame
     frames_in_track = [db.frames[frame_id] for frame_id in range(first_frame_ind, last_frame_ind)]
 
     # Track's locations in frames_in_window
-    left_locations = track.get_left_locations_in_specific_frames(first_frame_ind, last_frame_ind)
-    right_locations = track.get_right_locations_in_specific_frames(first_frame_ind, last_frame_ind)
+    left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
+    # left_locations = track.get_left_locations_in_specific_frames(first_frame_ind, last_frame_ind)
+    # right_locations = track.get_right_locations_in_specific_frames(first_frame_ind, last_frame_ind)
+
 
     # Track's location at the Last frame for triangulations
     last_left_img_loc = left_locations[-1]
