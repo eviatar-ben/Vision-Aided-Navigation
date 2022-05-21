@@ -49,8 +49,8 @@ def get_gtsam_frames(frames):
 def get_gtsam_k_matrix():
     k = utilities.K
     fx, fy, skew, cx, cy, b = k[0, 0], k[1, 1], k[0, 1], k[0, 2], k[1, 2], -utilities.M2[0, 3]
-    return gtsam.Cal3_S2Stereo(fx=fx, fy=fy, skew=skew, cx=cx, cy=cy, b=b)
-
+    gtsam_K  =  gtsam.Cal3_S2Stereo(fx=fx, fy=fy, skew=skew, cx=cx, cy=cy, b=b)
+    return  gtsam_K
 
 #
 # def get_factor(track_id, cam_id):
