@@ -87,12 +87,14 @@ def triangulate_from_last_frame_and_project_to_all_frames(db):
 
 
 def get_gtsam_k_matrix():
+    #todo: is it needed to
     k = utilities.K
     fx, fy, skew, cx, cy, b = k[0, 0], k[1, 1], k[0, 1], k[0, 2], k[1, 2], -utilities.M2[0, 3]
     return gtsam.Cal3_S2Stereo(fx=fx, fy=fy, skew=skew, cx=cx, cy=cy, b=b)
 
 
 def get_factor():
+    k = get_gtsam_k_matrix()
     pass
 
 
