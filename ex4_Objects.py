@@ -91,6 +91,10 @@ class Track:
     def get_frame(self, frame_id):
         return self.frames_by_ids[frame_id]
 
+    def get_last_frame_id(self):
+        max_id = max(self.frames_by_ids)
+        return max_id
+
     def __len__(self):
         return len(self.frames_by_ids) + 1
 
@@ -111,6 +115,7 @@ class Frame:
         self.outgoing = 0
         self.inliers_per = None
         self.extrinsic_mat = None
+        self.gtsam_stereo_camera = None
 
         Frame.frame_id_counter += 1
 

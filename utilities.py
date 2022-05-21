@@ -238,6 +238,19 @@ def get_track_frames_with_features(db, track):
         frames_l_xy.append((features_coord[0],
                             features_coord[2]))
         frames_r_xy.append((features_coord[1],
-                           features_coord[2]))
+                            features_coord[2]))
 
     return frames_l_xy, frames_r_xy
+
+
+def compose_transformations(first_ex_mat, second_ex_mat):
+    """
+    Compute the composition of two extrinsic camera matrices.
+    first_cam : A -> B
+    second_cam : B -> C
+    composed mat : A -> C
+    """
+    # [R2 | t2] @ [ R1 | t1] = [R2 @ R1 | R2 @ t1 + t2]
+    #             [000 | 1 ]
+    hom1 = np.append(first_ex_mat, [np.array([0, 0, 0, 1])], axis=0)
+    return second_ex_mat @ hom1
