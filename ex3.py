@@ -278,7 +278,7 @@ def play(stop, pickling=True):
             first_frame_p = cv2.KeyPoint_convert(np.asarray(first_frame_kp[0])), \
                             cv2.KeyPoint_convert(np.asarray(first_frame_kp[1]))
             second_frame_p = cv2.KeyPoint_convert(np.asarray(second_frame_kp[0])), cv2.KeyPoint_convert(
-                np.asarray(second_frame_kp[0]))
+                np.asarray(second_frame_kp[1]))
 
             tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p, inliers_per, Rt])
 

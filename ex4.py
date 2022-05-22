@@ -12,6 +12,30 @@ FRAMES_NUM = 3450
 # todo: problem with the right stereo match. maybe the problem is different key points  slipping in
 
 # todo: check whether last frame is not been considered?
+
+def handle_last_frame_in_each_track(db):
+    for track in db.tracks.values():
+        l1_point, r1_point, matched_feature, cur_frame_id = track.last_l1_r1_feature
+        # todo check maybe cur_frame is not exists - meaning creating of frame - cur_frame_frame_id + 1 is needed before
+
+        if cur_frame_id + 1 not in db.frames.keys():
+            if cur_frame_id in [3449]:
+                continue
+            if cur_frame_id in [3448]:
+                pass
+            else:
+                raise Exception(f"frame_id {cur_frame_id} doesnt exists")
+
+        if cur_frame_id == 3448:
+            last_frame = Frame()
+            db.add_frame(last_frame)
+
+        last_frame = db.frames[cur_frame_id + 1]
+        last_feature = Feature(l1_point[0], r1_point[0], l1_point[1], matched_feature)
+        last_frame.add_feature(track.track_id, last_feature)
+        track.add_frame(last_frame)
+
+
 def get_tracks_data(data_pickled_already):
     if not data_pickled_already:
         _, tracks_data = ex3.play(FRAMES_NUM)
@@ -19,6 +43,7 @@ def get_tracks_data(data_pickled_already):
         tracks_data = convert_data_kp_to_xy_point(tracks_data)
     else:
         pickle_in = open(r"ex4_pickles/tracks_data.pickle", "rb")
+
         tracks_data = pickle.load(pickle_in)
     return tracks_data
 
@@ -47,8 +72,11 @@ def extract_and_build_first_frame(db, l0_points, r0_points, l1_points, r1_points
         track.add_frame(first_frame)
         db.set_last_match(cur_l1, first_frame.frame_id, track.track_id)
 
-        feature = Feature(l0_point[0], r0_point[0], l0_point[1], l1_point, r1_point, matched_feature)
+        feature = Feature(l0_point[0], r0_point[0], l0_point[1], matched_feature)
         first_frame.add_feature(track.track_id, feature)
+
+        # for the last feature in the track:
+        track.last_l1_r1_feature = l1_point, r1_point, matched_feature, first_frame.frame_id
 
         db.add_track(track)
     first_frame.set_extrinsic_mat(Rt)  # for bundle adjustment
@@ -58,10 +86,12 @@ def extract_and_build_first_frame(db, l0_points, r0_points, l1_points, r1_points
     return first_frame
 
 
-def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame, Rt):
+def extract_and_build_frame(db, l0_points, r0_points, l1_points, r1_points, supporters_matches01p, prev_frame,
+                            cur_frame, Rt):
     # prev_l1_match is the last match in the previous frame:
     cur_frame_outgoing = 1  # consider the first frame
-    for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
+    for l0_point, r0_point, l1_point, r1_point, matched_feature in zip(l0_points, r0_points, l1_points, r1_points,
+                                                                       supporters_matches01p.items()):
         cur_l0, cur_l1 = matched_feature
 
         # the track is still going:
@@ -75,6 +105,13 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
             # todo maybe add track_if to feature's fields
             feature = Feature(l0_point[0], r0_point[0], l0_point[1], matched_feature)
             cur_frame.add_feature(track.track_id, feature)
+
+            assert track.last_l1_r1_feature[0][0] == l0_point[0]
+            assert track.last_l1_r1_feature[0][1] == l0_point[1]
+
+            assert track.last_l1_r1_feature[1][0] == r0_point[0]
+            assert track.last_l1_r1_feature[1][1] == r0_point[1]
+
             # print(f"track: {track.track_id} is still going with length {len(track)}")
         # new track
         else:
@@ -88,22 +125,15 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
             db.add_track(track)
             # print(f"new track: {track.track_id} with length {len(track)}")
 
+        # For  reconstruct the last feature in the track:
+        # this can be useful for testing as well
+        track.last_l1_r1_feature = l1_point, r1_point, matched_feature, cur_frame.frame_id
+
     cur_frame.set_extrinsic_mat(Rt)  # for bundle adjustment
     cur_frame.outgoing = cur_frame_outgoing
     db.add_frame(cur_frame)
 
     db.last_matches = supporters_matches01p
-
-
-def handle_last_frame_in_each_track(db):
-    for track in db.tracks.values():
-        last_frame_id_in_track = track.get_last_frame_id()
-
-        feature_in_last_frame = last_frame_id_in_track.get_feature(track.track_id)
-
-        last_match = feature_in_last_frame.matched_feature  # {idx_l0:idx_l1}
-
-        pass
 
 
 def build_data(data_pickled_already=True):
@@ -125,7 +155,8 @@ def build_data(data_pickled_already=True):
                                                        supporters_matches01p, first_frame, Rt)
         else:
             cur_frame = Frame()
-            extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame, Rt)
+            extract_and_build_frame(db, l0_points, r0_points, l1_points, r1_points,
+                                    supporters_matches01p, prev_frame, cur_frame, Rt)
             prev_frame = cur_frame
 
     handle_last_frame_in_each_track(db)
