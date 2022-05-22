@@ -82,7 +82,7 @@ def add_track_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame
     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
 
     # Add landmark symbol to "values" dictionary
-    p3d_sym = symbol('q', track.get_id())
+    p3d_sym = symbol('q', track.track_id)
     initial_estimate.insert(p3d_sym, gtsam_p3d)
 
     for i, frame in enumerate(frames_in_track):

@@ -215,7 +215,7 @@ def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind
     # 2. [matches00p[i] for i in mutual_matches_ind_l0] need to be changed
     mutual_supporters_idx_matches_ind_l0 = [mutual_matches_ind_l0[i] for i in supporters_idx]
     mutual_supporters_idx_matches_ind_r0 = [matches00p[i] for i in mutual_supporters_idx_matches_ind_l0]
-    mutual_supporters_idx_matches_ind_l1 = [mutual_matches_ind_l1[i] for i in supporters_idx]
+    mutual_supporters_idx_matches_ind_l1 = [matches01p[i] for i in mutual_supporters_idx_matches_ind_l0]
     mutual_supporters_idx_matches_ind_r1 = [matches11p[i] for i in mutual_supporters_idx_matches_ind_l1]
 
     if sanity_check:
