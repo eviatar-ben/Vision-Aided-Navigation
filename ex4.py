@@ -128,7 +128,7 @@ def main():
     # 4.2
     db.present_statistics()
     # 4.3
-    track = utilities.get_track_in_len(db, 11, True)
+    track = utilities.get_track_in_len(db, 3, False)
     exs_plots.display_track(db, track, crop=False)
     # 4.4
     exs_plots.connectivity_graph(db.frames.values())
