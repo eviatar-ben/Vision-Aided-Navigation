@@ -131,8 +131,12 @@ class Frame:
 
 class Feature:
     # todo maybe add track_if to feature's fields
-    def __init__(self, xl, xr, y, matched_feature):
+    def __init__(self, xl, xr, y, l1_point, r1_point, matched_feature):
         self.xl = xl
         self.xr = xr
         self.y = y
+
+        self.left_point_in_next_frame = l1_point
+        self.right_point_in_next_frame = r1_point
+
         self.matched_feature = matched_feature  # {idx_l0:idx_l1}:

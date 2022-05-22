@@ -37,15 +37,17 @@ def convert_data_kp_to_xy_point(tracks_data):
     return converted_data_xy_points
 
 
-def extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame, Rt):
+def extract_and_build_first_frame(db, l0_points, r0_points, l1_points, r1_points,
+                                  supporters_matches01p, first_frame, Rt):
     db.last_matches = supporters_matches01p
-    for l0_point, r0_point, matched_feature in zip(l0_points, r0_points, supporters_matches01p.items()):
+    for l0_point, r0_point, l1_point, r1_point, matched_feature in zip(l0_points, r0_points, l1_points, r1_points,
+                                                                       supporters_matches01p.items()):
         cur_l0, cur_l1 = matched_feature
         track = Track()
         track.add_frame(first_frame)
         db.set_last_match(cur_l1, first_frame.frame_id, track.track_id)
 
-        feature = Feature(l0_point[0], r0_point[0], l0_point[1], matched_feature)
+        feature = Feature(l0_point[0], r0_point[0], l0_point[1], l1_point, r1_point, matched_feature)
         first_frame.add_feature(track.track_id, feature)
 
         db.add_track(track)
@@ -93,6 +95,17 @@ def extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, pre
     db.last_matches = supporters_matches01p
 
 
+def handle_last_frame_in_each_track(db):
+    for track in db.tracks.values():
+        last_frame_id_in_track = track.get_last_frame_id()
+
+        feature_in_last_frame = last_frame_id_in_track.get_feature(track.track_id)
+
+        last_match = feature_in_last_frame.matched_feature  # {idx_l0:idx_l1}
+
+        pass
+
+
 def build_data(data_pickled_already=True):
     tracks_data = get_tracks_data(data_pickled_already)
     db = DataBase()
@@ -108,11 +121,14 @@ def build_data(data_pickled_already=True):
         l0_points, r0_points = first_frame_kps
         l1_points, r1_points = second_frame_kps
         if not db.last_matches:
-            prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, supporters_matches01p, first_frame, Rt)
+            prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, l1_points, r1_points,
+                                                       supporters_matches01p, first_frame, Rt)
         else:
             cur_frame = Frame()
             extract_and_build_frame(db, l0_points, r0_points, supporters_matches01p, prev_frame, cur_frame, Rt)
             prev_frame = cur_frame
+
+    handle_last_frame_in_each_track(db)
 
     db.set_inliers_per(inliers_pers)
 
