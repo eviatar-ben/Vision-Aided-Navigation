@@ -83,6 +83,7 @@ class Track:
         self.track_id = Track.track_id_counter
         self.frames_by_ids = {}  # {frame_id : frame}
         # self.kps_ids_match_in_track_path = []
+        self.last_l1_r1_feature = None  # l1_point, r1_point, matched_feature, cur_frame.frame_id
         Track.track_id_counter += 1
 
     def add_frame(self, frame):
@@ -96,7 +97,7 @@ class Track:
         return max_id
 
     def __len__(self):
-        return len(self.frames_by_ids) + 1
+        return len(self.frames_by_ids)
 
     def __str__(self):
         return
@@ -131,12 +132,9 @@ class Frame:
 
 class Feature:
     # todo maybe add track_if to feature's fields
-    def __init__(self, xl, xr, y, l1_point, r1_point, matched_feature):
+    def __init__(self, xl, xr, y, matched_feature):
         self.xl = xl
         self.xr = xr
         self.y = y
-
-        self.left_point_in_next_frame = l1_point
-        self.right_point_in_next_frame = r1_point
 
         self.matched_feature = matched_feature  # {idx_l0:idx_l1}:
