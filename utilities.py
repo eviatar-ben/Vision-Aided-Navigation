@@ -275,3 +275,18 @@ def compute_square_dist(pts_lst1, pts_lst2, dim="3d"):
 def euclidean_dist(pts_lst1, pts_lst2, dim="3d"):
     squared_dist = compute_square_dist(pts_lst1, pts_lst2, dim=dim)
     return np.sqrt(squared_dist)
+
+
+def get_projection_factors_errors(factors, values):
+    errors = []
+    for factor in factors:
+        errors.append(factor.error(values))
+
+    return np.array(errors)
+
+
+def get_total_projection_error(left_projections, right_projections, left_locations, right_locations):
+    left_proj_dist = euclidean_dist(np.array(left_projections), np.array(left_locations))
+    right_proj_dist = euclidean_dist(np.array(right_projections), np.array(right_locations))
+    total_proj_dist = (left_proj_dist + right_proj_dist) / 2
+    return total_proj_dist

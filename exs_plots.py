@@ -366,12 +366,7 @@ def present_reprojection_error(db, track):
 # -----------------------------------------------------5----------------------------------------------------------------
 
 # 5.1
-def present_gtsam_re_projection_track_error(left_projections, right_projections, left_locations, right_locations,
-                                            track):
-    left_proj_dist = utilities.euclidean_dist(np.array(left_projections), np.array(left_locations))
-    right_proj_dist = utilities.euclidean_dist(np.array(right_projections), np.array(right_locations))
-    total_proj_dist = (left_proj_dist + right_proj_dist) / 2
-
+def present_gtsam_re_projection_track_error(total_proj_dist, track):
     fig, ax = plt.subplots(figsize=(10, 7))
 
     ax.set_title(f"Reprojection error for track: {track.track_id} with len = {len(track)}")
@@ -380,4 +375,40 @@ def present_gtsam_re_projection_track_error(left_projections, right_projections,
     plt.xlabel('Frames')
     fig.show()
     fig.savefig(fr"plots/ex5/gtsam_reprojection_error/gtsam_reprojection_track_error {track.track_id}.png")
+    plt.close(fig)
+
+
+def plot_factor_re_projection_error_graph(factor_projection_errors, total_proj_dist):
+    """
+    Plots re projection error
+    """
+    exponent_vals = np.exp(0.5 * total_proj_dist)
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    ax.set_title(f"Factor Re projection error from last frame")
+    plt.scatter(range(len(factor_projection_errors)), factor_projection_errors, label="Factor")
+    plt.scatter(range(len(exponent_vals)), exponent_vals, label="exp(0.5* ||z - proj(c, q)||)")
+    plt.legend(loc="upper right")
+    plt.ylabel('Error')
+    plt.xlabel('Frames')
+    fig.show()
+    fig.savefig(fr"plots/ex5/factor_reprojection_error/Factor Re projection error graph for last frame.png")
+    plt.close(fig)
+
+
+def plot_factor_as_func_of_re_projection_error_graph(factor_projection_errors, total_proj_dist):
+    """
+    Plots re projection error
+    """
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    ax.set_title(f"Factor error as a function of a Re projection error graph for last frame")
+    plt.plot(total_proj_dist, factor_projection_errors, label="Factor")
+    plt.plot(total_proj_dist, 0.5 * total_proj_dist ** 2, label="0.5x^2")
+    plt.plot(total_proj_dist, total_proj_dist ** 2, label="x^2")
+    plt.legend(loc="upper left")
+    plt.ylabel('Factor error')
+    plt.xlabel('Re projection error')
+    fig.show()
+    fig.savefig(f"plots/ex5/factor_error_reprojection_func/Factor error as a function of a reprojection error.png")
     plt.close(fig)
