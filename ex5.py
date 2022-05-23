@@ -123,6 +123,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
 # ----------------------------------------------------5.1---------------------------------------------------------------
 
 def build_gtsam_frame(frame):
+
     reversed_ext = utilities.reverse_ext(frame.extrinsic_mat)
     R = reversed_ext[:, :3]
     t = reversed_ext[:, 3]
