@@ -297,7 +297,7 @@ def triangulate_from_last_frame_and_project_to_all_frames_repo(db, track):
 if __name__ == '__main__':
     db = ex4.build_data()
     # 5.1
-    track = utilities.get_track_in_len(db, 20, False)
+    track = utilities.get_track_in_len(db, 11, False)
     triangulate_from_last_frame_and_project_to_all_frames(db, track)
     # triangulate_from_last_frame_and_project_to_all_frames_repo(db, track)
 
