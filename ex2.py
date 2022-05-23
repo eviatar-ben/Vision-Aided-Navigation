@@ -41,8 +41,8 @@ def present_key_points(img1, kp1, img2, kp2):
     img_kp1 = cv2.drawKeypoints(img1, kp1, cv2.DRAW_MATCHES_FLAGS_DEFAULT, color=(120, 157, 187))
     img_kp2 = cv2.drawKeypoints(img2, kp2, cv2.DRAW_MATCHES_FLAGS_DEFAULT, color=(120, 157, 187))
 
-    cv2.imwrite("img1_key_points.jpg", img_kp1)
-    cv2.imwrite("img2_key_points.jpg", img_kp2)
+    cv2.imwrite("plots/ex1/img1_key_points.jpg", img_kp1)
+    cv2.imwrite("plots/ex1/img2_key_points.jpg", img_kp2)
     cv2.waitKey(0)
 
 

@@ -216,15 +216,16 @@ def reverse_ext(ext):
     t = ext[:, 3]
 
     rev_R = R.T
-    rev_t = -rev_R @ t
+    # rev_t = -rev_R @ t
+    rev_t = -R.T @ t
+
     return np.hstack((rev_R, rev_t.reshape(3, 1)))
 
 
 def get_track_frames_with_features(db, track):
     """
-    given database and track the function will return an array of images (frames)
-    of the corresponding track both left and right frames,
-    and both frames with the features loaded in the frames
+    given database and track the function will return 2 arrays of the track's feature left and right
+    (each "side" in different array)
     :param db:
     :param track:
     :return:
@@ -254,3 +255,23 @@ def compose_transformations(first_ex_mat, second_ex_mat):
     #             [000 | 1 ]
     hom1 = np.append(first_ex_mat, [np.array([0, 0, 0, 1])], axis=0)
     return second_ex_mat @ hom1
+
+
+def compute_square_dist(pts_lst1, pts_lst2, dim="3d"):
+    """
+    Check the euclidean dist between the projected d2_points and correspond pixel locations
+    :param pts_lst1:
+    :param pts_lst2:
+    :return:
+    """
+    pts_sub = pts_lst1 - pts_lst2  # (x1, y1), (x2, y2) -> (x1 - x2, y1 - y2)
+    if dim == "2d":
+        squared_dist = np.einsum("ij,ij->i", pts_sub, pts_sub)  # (x1 - x2)^2 + (y1 - y2)^2
+    elif dim == "3d":
+        squared_dist = np.linalg.norm(pts_sub, axis=1)
+    return squared_dist
+
+
+def euclidean_dist(pts_lst1, pts_lst2, dim="3d"):
+    squared_dist = compute_square_dist(pts_lst1, pts_lst2, dim=dim)
+    return np.sqrt(squared_dist)

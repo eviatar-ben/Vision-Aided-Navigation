@@ -115,7 +115,8 @@ class Frame:
         self.tracks_to_features = {}  # {track_id : feature}
         self.outgoing = 0
         self.inliers_per = None
-        self.extrinsic_mat = None
+        self.relative_extrinsic_mat = None  # relative to the last frame
+        self.general_extrinsic_mat = None  # relative to the very first frame
         self.gtsam_stereo_camera = None
 
         Frame.frame_id_counter += 1
@@ -127,7 +128,7 @@ class Frame:
         return self.tracks_to_features[track_id]
 
     def set_extrinsic_mat(self, ext):
-        self.extrinsic_mat = ext  # for bundle adjustment
+        self.relative_extrinsic_mat = ext  # for bundle adjustment
 
 
 class Feature:

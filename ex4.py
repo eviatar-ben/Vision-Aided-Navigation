@@ -18,17 +18,12 @@ def handle_last_frame_in_each_track(db):
         l1_point, r1_point, matched_feature, cur_frame_id = track.last_l1_r1_feature
         # todo check maybe cur_frame is not exists - meaning creating of frame - cur_frame_frame_id + 1 is needed before
 
-        if cur_frame_id + 1 not in db.frames.keys():
-            if cur_frame_id in [3449]:
-                continue
-            if cur_frame_id in [3448]:
-                pass
+        if cur_frame_id + 1 not in db.frames:
+            if cur_frame_id + 1 == 3449:
+                last_frame = Frame()
+                db.add_frame(last_frame)
             else:
                 raise Exception(f"frame_id {cur_frame_id} doesnt exists")
-
-        if cur_frame_id == 3448:
-            last_frame = Frame()
-            db.add_frame(last_frame)
 
         last_frame = db.frames[cur_frame_id + 1]
         last_feature = Feature(l1_point[0], r1_point[0], l1_point[1], matched_feature)
@@ -136,6 +131,26 @@ def extract_and_build_frame(db, l0_points, r0_points, l1_points, r1_points, supp
     db.last_matches = supporters_matches01p
 
 
+def handle_general_extrinsic_matrices(db):
+    """
+    this function compute iterativly and sets for each frame the general extrinsic matrix
+    (i.e the extrinsic mat' relative to the very first matrix (rather to the last frame).
+    """
+    flag = True
+    last_general_extrinsic_mat = None
+    for frames_id, frame in db.frames.items():
+        try:
+            if flag:
+                flag = False
+                last_general_extrinsic_mat = frame.relative_extrinsic_mat
+                continue
+            frame.general_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
+                                                                            frame.relative_extrinsic_mat)
+            last_general_extrinsic_mat = frame.general_extrinsic_mat
+        except:
+            print(f"frames_id {frames_id} raised problem")
+
+
 def build_data(data_pickled_already=True):
     tracks_data = get_tracks_data(data_pickled_already)
     db = DataBase()
@@ -160,7 +175,7 @@ def build_data(data_pickled_already=True):
             prev_frame = cur_frame
 
     handle_last_frame_in_each_track(db)
-
+    handle_general_extrinsic_matrices(db)
     db.set_inliers_per(inliers_pers)
 
     return db
