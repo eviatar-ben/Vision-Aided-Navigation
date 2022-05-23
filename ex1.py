@@ -36,8 +36,8 @@ def present_key_points(img1, kp1, img2, kp2):
     img_kp1 = cv2.drawKeypoints(img1, kp1, cv2.DRAW_MATCHES_FLAGS_DEFAULT, color=(120, 157, 187))
     img_kp2 = cv2.drawKeypoints(img2, kp2, cv2.DRAW_MATCHES_FLAGS_DEFAULT, color=(120, 157, 187))
 
-    cv2.imwrite("img1_key_points.jpg", img_kp1)
-    cv2.imwrite("img2_key_points.jpg", img_kp2)
+    cv2.imwrite("plots/ex1/img1_key_points.jpg", img_kp1)
+    cv2.imwrite("plots/ex1/img2_key_points.jpg", img_kp2)
     cv2.waitKey(0)
 
 
@@ -46,7 +46,7 @@ def match(kp1, des1, kp2, des2, img1, img2, random_20_matches=True):
         random_matches = random.choices(bf.match(des1, des2), k=20)
         sorted_matches = sorted(random_matches, key=lambda x: x.distance)
         img3 = cv2.drawMatches(img1, kp1, img2, kp2, sorted_matches[:50], img2, flags=2)
-        cv2.imwrite("img3_20matches.jpg", img3)
+        cv2.imwrite("plots/ex1/img3_20matches.jpg", img3)
     else:
         matches = bf.match(des1, des2)
         sorted_matches = sorted(matches, key=lambda x: x.distance)
