@@ -142,10 +142,10 @@ def handle_general_extrinsic_matrices(db):
         try:
             if flag:
                 flag = False
-                last_general_extrinsic_mat = frame.extrinsic_mat
+                last_general_extrinsic_mat = frame.relative_extrinsic_mat
                 continue
             frame.general_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
-                                                                            frame.extrinsic_mat)
+                                                                            frame.relative_extrinsic_mat)
             last_general_extrinsic_mat = frame.general_extrinsic_mat
         except:
             print(f"frames_id {frames_id} raised problem")

@@ -77,7 +77,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2)]
     first_frame = frames_in_bundle[0]
 
-    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.extrinsic_mat)  # first cam -> world
+    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.relative_extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
     for frame_id, frame in zip(range(keyframe1, keyframe2), frames_in_bundle):
         left_pose_symbol = symbol('C', frame.frame_id)
@@ -88,7 +88,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
 
         # Compute transformation of : Rt(world - > cur cam) *Rt(first cam -> world) = Rt(first cam -> cur cam)
         camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                               frame.extrinsic_mat)
+                                                                               frame.relative_extrinsic_mat)
         # Convert this transformation to: cur cam -> first cam
         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
         initial_estimate.insert(left_pose_symbol, cur_cam_pose)
@@ -124,7 +124,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
 
 def build_gtsam_frame(first_frame_cam_to_world_ex_mat, frame):
     camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                           frame.extrinsic_mat)
+                                                                           frame.relative_extrinsic_mat)
 
     cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
@@ -158,10 +158,9 @@ def project_3d_point_in_frame(gtsam_frame, p):
 
 
 def get_gtsam_frames(frames_in_track):
-    # gtsam_frames = [build_gtsam_frame(frame) for frame in frames]
     gtsam_frames = []
     first_frame = frames_in_track[0]
-    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.extrinsic_mat)  # first cam -> world
+    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.general_extrinsic_mat)  # first cam -> world
     for frame in frames_in_track:
         gtsam_frame = build_gtsam_frame(first_frame_cam_to_world_ex_mat, frame)
         gtsam_frames.append(gtsam_frame)
@@ -221,10 +220,10 @@ def triangulate_from_last_frame_and_project_to_all_frames_repo(db, track):
     gtsam_stereo_point2_for_triangulation = gtsam.StereoPoint2(xl, xr, y)
 
     # Triangulation
-    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.extrinsic_mat)  # first cam -> world
+    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.relative_extrinsic_mat)  # first cam -> world
 
     camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                           frame_to_triangulate_from.extrinsic_mat)
+                                                                           frame_to_triangulate_from.relative_extrinsic_mat)
 
     cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
@@ -241,7 +240,7 @@ def triangulate_from_last_frame_and_project_to_all_frames_repo(db, track):
         # Create camera symbol and update values dictionary
 
         camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                               frame.extrinsic_mat)
+                                                                               frame.relative_extrinsic_mat)
 
         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
         gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
