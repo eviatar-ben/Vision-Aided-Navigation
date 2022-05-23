@@ -6,7 +6,6 @@ import numpy as np
 import exs_plots
 
 
-
 # todo maybe in ex4 every track is missing the last frame
 # todo check weather the Rt that's got from ex3 are corresponding to the frame
 #  (maybe there is a 1 shift between the frames and the Rts??)
@@ -238,9 +237,6 @@ def triangulate_and_project(db, track, frames):
     exs_plots.plot_factor_as_func_of_re_projection_error_graph(projection_factor_errors, total_proj_dist)
 
 
-
-
-
 def triangulate_from_last_frame_and_project_to_all_frames(db, track):
     frames_in_track = [frame for frame in track.frames_by_ids.values()]
 
@@ -331,7 +327,7 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
 if __name__ == '__main__':
     db = ex4.build_data()
     # 5.1
-    track = utilities.get_track_in_len(db, 11, False)
+    track = utilities.get_track_in_len(db, 40, False)
     triangulate_from_last_frame_and_project_to_all_frames(db, track)
     # triangulate_from_last_frame_and_project_to_all_frames_repo(db, track)
 
