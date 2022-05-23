@@ -19,11 +19,7 @@ def handle_last_frame_in_each_track(db):
         # todo check maybe cur_frame is not exists - meaning creating of frame - cur_frame_frame_id + 1 is needed before
 
         if cur_frame_id + 1 not in db.frames:
-            if cur_frame_id + 1 == 3449:
-                last_frame = Frame()
-                db.add_frame(last_frame)
-            else:
-                raise Exception(f"frame_id {cur_frame_id} doesnt exists")
+            raise Exception(f"frame_id {cur_frame_id} doesnt exists")
 
         last_frame = db.frames[cur_frame_id + 1]
         last_feature = Feature(l1_point[0], r1_point[0], l1_point[1], matched_feature)
@@ -139,40 +135,47 @@ def handle_general_extrinsic_matrices(db):
     flag = True
     last_general_extrinsic_mat = None
     for frames_id, frame in db.frames.items():
-        try:
-            if flag:
-                flag = False
-                last_general_extrinsic_mat = frame.relative_extrinsic_mat
-                continue
-            frame.general_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
-                                                                            frame.relative_extrinsic_mat)
-            last_general_extrinsic_mat = frame.general_extrinsic_mat
-        except:
-            print(f"frames_id {frames_id} raised problem")
+        if flag:
+            flag = False
+            last_general_extrinsic_mat = frame.relative_extrinsic_mat
+            frame.general_extrinsic_mat = last_general_extrinsic_mat
+            continue
+        frame.general_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
+                                                                        frame.relative_extrinsic_mat)
+        last_general_extrinsic_mat = frame.general_extrinsic_mat
 
 
 def build_data(data_pickled_already=True):
+    # todo: all the data is in one right shift. maybe to concatenate the identity Rt for the first frame
     tracks_data = get_tracks_data(data_pickled_already)
     db = DataBase()
     prev_frame = None
     first_frame = Frame()
     inliers_pers = []
-
+    prev_Rt = None
+    next_Rt = np.c_[np.identity(3), np.zeros(3).reshape(1, 3)[0]]
     for track_data in tracks_data:
         # inliers are not per frame???
         inliers_pers.append(track_data[3])
         first_frame_kps, second_frame_kps, supporters_matches01p = track_data[0], track_data[1], track_data[2]
-        Rt = track_data[4]
+        prev_Rt = next_Rt
+        next_Rt = track_data[4]
         l0_points, r0_points = first_frame_kps
         l1_points, r1_points = second_frame_kps
         if not db.last_matches:
             prev_frame = extract_and_build_first_frame(db, l0_points, r0_points, l1_points, r1_points,
-                                                       supporters_matches01p, first_frame, Rt)
+                                                       supporters_matches01p, first_frame, prev_Rt)
         else:
             cur_frame = Frame()
             extract_and_build_frame(db, l0_points, r0_points, l1_points, r1_points,
-                                    supporters_matches01p, prev_frame, cur_frame, Rt)
+                                    supporters_matches01p, prev_frame, cur_frame, prev_Rt)
             prev_frame = cur_frame
+
+    # todo: something here doesnt look good am i missing one Rt?
+    last_frame = Frame()
+    db.add_frame(last_frame)
+    last_frame.relative_extrinsic_mat = next_Rt
+    last_frame.relative_extrinsic_mat = tracks_data[-1][4]
 
     handle_last_frame_in_each_track(db)
     handle_general_extrinsic_matrices(db)
