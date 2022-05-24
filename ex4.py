@@ -132,17 +132,18 @@ def handle_general_extrinsic_matrices(db):
     this function compute iterativly and sets for each frame the general extrinsic matrix
     (i.e the extrinsic mat' relative to the very first matrix (rather to the last frame).
     """
-    flag = True
     last_general_extrinsic_mat = None
     for frames_id, frame in db.frames.items():
-        if flag:
-            flag = False
+        # first frame:
+        if frames_id == 0:
             last_general_extrinsic_mat = frame.relative_extrinsic_mat
-            frame.general_extrinsic_mat = last_general_extrinsic_mat
+            frame.global_extrinsic_mat = last_general_extrinsic_mat
             continue
-        frame.general_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
-                                                                        frame.relative_extrinsic_mat)
-        last_general_extrinsic_mat = frame.general_extrinsic_mat
+        # regular frame
+        # todo: check weather the composition is not in the right order
+        frame.global_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
+                                                                       frame.relative_extrinsic_mat)
+        last_general_extrinsic_mat = frame.global_extrinsic_mat
 
 
 def build_data(data_pickled_already=True):

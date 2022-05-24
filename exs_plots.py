@@ -378,7 +378,7 @@ def present_gtsam_re_projection_track_error(total_proj_dist, track):
     plt.close(fig)
 
 
-def plot_factor_re_projection_error_graph(factor_projection_errors, total_proj_dist):
+def plot_factor_re_projection_error_graph(factor_projection_errors, total_proj_dist, track):
     """
     Plots re projection error
     """
@@ -392,11 +392,12 @@ def plot_factor_re_projection_error_graph(factor_projection_errors, total_proj_d
     plt.ylabel('Error')
     plt.xlabel('Frames')
     fig.show()
-    fig.savefig(fr"plots/ex5/factor_reprojection_error/Factor Re projection error graph for last frame.png")
+    fig.savefig(
+        fr"plots/ex5/factor_reprojection_error/Factor Re projection error graph for last frame {track.track_id}.png")
     plt.close(fig)
 
 
-def plot_factor_as_func_of_re_projection_error_graph(factor_projection_errors, total_proj_dist):
+def plot_factor_as_func_of_re_projection_error_graph(factor_projection_errors, total_proj_dist, track):
     """
     Plots re projection error
     """
@@ -410,5 +411,7 @@ def plot_factor_as_func_of_re_projection_error_graph(factor_projection_errors, t
     plt.ylabel('Factor error')
     plt.xlabel('Re projection error')
     fig.show()
-    fig.savefig(f"plots/ex5/factor_error_reprojection_func/Factor error as a function of a reprojection error.png")
+    fig.savefig(
+        f"plots/ex5/factor_error_reprojection_func/"
+        f"Factor error as a function of a reprojection error {track.track_id}.png")
     plt.close(fig)

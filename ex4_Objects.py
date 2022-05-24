@@ -117,7 +117,7 @@ class Frame:
         self.outgoing = 0
         self.inliers_per = None
         self.relative_extrinsic_mat = None  # relative to the last frame
-        self.general_extrinsic_mat = None  # relative to the very first frame
+        self.global_extrinsic_mat = None  # relative to the very first frame
         self.gtsam_stereo_camera = None
 
         Frame.frame_id_counter += 1
