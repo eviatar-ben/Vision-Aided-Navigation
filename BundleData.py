@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class BundleData:
 
     def __init__(self, keyframe1, keyframe2, cameras_symbols, landmark_symbols,
@@ -22,9 +25,9 @@ class BundleData:
         cameras_poses = []
         for camera_sym in self.cameras_symbols:
             cam_pose = self.optimized_values.atPose3(camera_sym)
-            cameras_poses.append([cam_pose.x(), cam_pose.y(), cam_pose.z()])
+            cameras_poses.append(np.asarray([cam_pose.x(), cam_pose.y(), cam_pose.z()]))
 
-        return cameras_poses
+        return np.asarray(cameras_poses)
 
     def get_optimized_landmarks_p3d(self):
         landmarks = []
@@ -32,4 +35,4 @@ class BundleData:
             landmark = self.optimized_values.atPoint3(landmark_sym)
             landmarks.append(landmark)
 
-        return landmarks
+        return np.asarray(landmarks)

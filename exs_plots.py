@@ -423,8 +423,8 @@ def plot_left_cam_2d_trajectory(bundle_data, title=""):
     fig = plt.figure()
     ax = fig.add_subplot()
 
-    cameras = [bundle_data.get_optimized_cameras_p3d()]
-    landmarks = [bundle_data.get_optimized_landmarks_p3d()]
+    cameras = bundle_data.get_optimized_cameras_p3d()
+    landmarks = bundle_data.get_optimized_landmarks_p3d()
 
     ax.set_title(f"{title} Left cameras and landmarks 2d trajectory of {len(cameras)} bundles")
 
@@ -438,5 +438,5 @@ def plot_left_cam_2d_trajectory(bundle_data, title=""):
     # ax.set_xlim(-5, 5)
     # ax.set_ylim(-5, 50)
 
-    fig.savefig(f"plots/ex5/2D_trajectory.png")
+    fig.savefig(f"plots/ex5/Trajectory2D_2v/Trajectory2D_2v.png")
     plt.close(fig)
