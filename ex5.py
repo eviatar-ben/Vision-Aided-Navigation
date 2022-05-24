@@ -28,8 +28,7 @@ def get_gtsam_k_matrix():
 
 def add_track_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from, gtsam_calib_mat,
                       initial_estimate):
-    # frames_in_track = [db.frames[frame.frame_id] for frame_id in db.frames[first_frame_ind: last_frame_ind + 1]
-    frames_in_track = [db.frames[frame_id] for frame_id in range(first_frame_ind, last_frame_ind)]
+    frames_in_track = [frame for frame in track.frames_by_ids.values()]
 
     # Track's locations in frames_in_window
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
@@ -70,17 +69,18 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
 
-    pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
-    # pose_uncertainty = np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0])  # todo: check maor's covariances
+    # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
+    pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
+        np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
     tracks_id_in_bundle = set()
 
     frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2)]
     first_frame = frames_in_bundle[0]
 
-    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.relative_extrinsic_mat)  # first cam -> world
+    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
     for frame_id, frame in zip(range(keyframe1, keyframe2), frames_in_bundle):
-        left_pose_symbol = symbol('C', frame.frame_id)
+        left_pose_symbol = symbol("c", frame.frame_id)
         # first frame
         if frame_id == keyframe1:
             first_pose = gtsam.Pose3()
@@ -88,15 +88,15 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
 
         # Compute transformation of : Rt(world - > cur cam) *Rt(first cam -> world) = Rt(first cam -> cur cam)
         camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                               frame.relative_extrinsic_mat)
+                                                                               frame.global_extrinsic_mat)
         # Convert this transformation to: cur cam -> first cam
         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
-        initial_estimate.insert(left_pose_symbol, cur_cam_pose)
+        initial_estimate.insert(left_pose_symbol, gtsam.Pose3(cur_cam_pose))
 
     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
 
     # For each track create measurements factors
-    # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inide the bundle?
+    # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
                        db.tracks[track_id].get_last_frame_id() < keyframe2]
@@ -111,6 +111,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
             continue
 
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
+        #todo : can go out from the loop
         gtsam_last_cam = gtsam.StereoCamera(gtsam_left_cam_pose, k)
         add_track_factors(graph, track, keyframe1, keyframe2, gtsam_last_cam, k, initial_estimate)  # Todo: as before
 
@@ -195,12 +196,10 @@ def triangulate_and_project(db, track, frames):
 
     left_projections, right_projections = [], []
     for i, frame in enumerate(frames):
-        # Create camera symbol and update values dictionary
-        left_pose_sym = symbol("c", frame.frame_id)
-
         gtsam_frame, gtsam_left_cam_pose, _ = get_gtsam_pose_and_and_stereo_matrix(first_frame_cam_to_world_ex_mat,
                                                                                    frame, gtsam_calib_mat)
-
+        # Create camera symbol and update values dictionary
+        left_pose_sym = symbol("c", frame.frame_id)
         values.insert(left_pose_sym, gtsam_left_cam_pose)
 
         # Measurement values
@@ -244,9 +243,8 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
 if __name__ == '__main__':
     db = ex4.build_data()
     # 5.1
-    track = utilities.get_track_in_len(db, 20, False)
-    triangulate_from_last_frame_and_project_to_all_frames(db, track)
-    # triangulate_from_last_frame_and_project_to_all_frames_repo(db, track)
+    # track = utilities.get_track_in_len(db, 20, False)
+    # triangulate_from_last_frame_and_project_to_all_frames(db, track)
 
     # 5.2
-    # graph, result = adjust_bundle(db, 0, 4, [])
+    graph, result = adjust_bundle(db, 0, 4, [])
