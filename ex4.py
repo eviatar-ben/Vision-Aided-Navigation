@@ -140,7 +140,7 @@ def handle_general_extrinsic_matrices(db):
             frame.global_extrinsic_mat = last_general_extrinsic_mat
             continue
         # regular frame
-        # todo: check weather the composition is not in the right order
+        # todo: check weather the composition is not in the right order seems fine
         frame.global_extrinsic_mat = utilities.compose_transformations(last_general_extrinsic_mat,
                                                                        frame.relative_extrinsic_mat)
         last_general_extrinsic_mat = frame.global_extrinsic_mat
