@@ -128,7 +128,7 @@ def get_gtsam_pose_and_and_stereo_matrix(first_frame_cam_to_world_ex_mat, frame,
     and return the pose and the stereo of the current frame relative to the first frame (first frame of he bundle)
     """
     camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                           frame.general_extrinsic_mat)
+                                                                           frame.global_extrinsic_mat)
     cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
     frame.gtsam_stereo_camera = gtsam.StereoCamera(gtsam_left_cam_pose, gtsam_calib_mat)
@@ -144,11 +144,11 @@ def triangulate_from_last_frame(first_frame, last_frame):
 
     # C_first =  World -> C_first
     # C_first-1 = C_first -> World
-    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.general_extrinsic_mat)
+    first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)
 
     #   C_first -> World -> C_last =    C_first -> C_last
     camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-                                                                           last_frame.general_extrinsic_mat)
+                                                                           last_frame.global_extrinsic_mat)
     # C_last -> C_first
     cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
@@ -197,13 +197,6 @@ def triangulate_and_project(db, track, frames):
         # Create camera symbol and update values dictionary
         left_pose_sym = symbol("c", frame.frame_id)
 
-        # camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-        #                                                                        frame.general_extrinsic_mat)
-        #
-        # cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
-        # gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
-        # gtsam_frame = gtsam.StereoCamera(gtsam_left_cam_pose, gtsam_calib_mat)
-
         gtsam_frame, gtsam_left_cam_pose, _ = get_gtsam_pose_and_and_stereo_matrix(first_frame_cam_to_world_ex_mat,
                                                                                    frame, gtsam_calib_mat)
 
@@ -233,8 +226,8 @@ def triangulate_and_project(db, track, frames):
     projection_factor_errors = utilities.get_projection_factors_errors(factors, values)
 
     exs_plots.present_gtsam_re_projection_track_error(total_proj_dist, track)
-    exs_plots.plot_factor_re_projection_error_graph(projection_factor_errors, total_proj_dist)
-    exs_plots.plot_factor_as_func_of_re_projection_error_graph(projection_factor_errors, total_proj_dist)
+    exs_plots.plot_factor_re_projection_error_graph(projection_factor_errors, total_proj_dist, track)
+    exs_plots.plot_factor_as_func_of_re_projection_error_graph(projection_factor_errors, total_proj_dist, track)
 
 
 def triangulate_from_last_frame_and_project_to_all_frames(db, track):
@@ -246,88 +239,10 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
     triangulate_and_project(db, track, frames_in_track)
 
 
-# ---------------------------------------------------------repo---------------------------------------------------------
-# def triangulate_from_last_frame_and_project_to_all_frames_repo(db, track):
-#     import matplotlib.pyplot as plt
-#
-#     frames_in_track = list(track.frames_by_ids.values())
-#     frame_to_triangulate_from = frames_in_track[-1]
-#     first_frame = frames_in_track[0]
-#
-#     # Locations in frames_in_window
-#     left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
-#
-#     # Last frame locations for triangulations
-#     last_left_img_coor = left_locations[-1]
-#     last_right_img_coor = right_locations[-1]
-#     xl, xr, y = last_left_img_coor[0], last_right_img_coor[0], last_left_img_coor[1]
-#     gtsam_stereo_point2_for_triangulation = gtsam.StereoPoint2(xl, xr, y)
-#
-#     # Triangulation
-#     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.relative_extrinsic_mat)  # first cam -> world
-#
-#     camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-#                                                                            frame_to_triangulate_from.relative_extrinsic_mat)
-#
-#     cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
-#     gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
-#
-#     gtsam_calib_mat = get_gtsam_k_matrix()
-#     gtsam_frame_to_triangulate_from = gtsam.StereoCamera(gtsam_left_cam_pose, gtsam_calib_mat)
-#
-#     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
-#
-#     left_projections = []
-#     right_projections = []
-#
-#     for i, frame in enumerate(frames_in_track):
-#         # Create camera symbol and update values dictionary
-#
-#         camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
-#                                                                                frame.relative_extrinsic_mat)
-#
-#         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
-#         gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
-#
-#         # Measurement values
-#         measure_xl, measure_xr, measure_y = left_locations[i][0], right_locations[i][0], left_locations[i][1]
-#         gtsam_measurement_pt2 = gtsam.StereoPoint2(measure_xl, measure_xr, measure_y)
-#
-#         gtsam_frame = gtsam.StereoCamera(gtsam_left_cam_pose, gtsam_calib_mat)
-#
-#         # Project p34 on frame
-#         gtsam_projected_stereo_point2 = gtsam_frame.project(gtsam_p3d)
-#         xl, xr, y = gtsam_projected_stereo_point2.uL(), gtsam_projected_stereo_point2.uR(), gtsam_projected_stereo_point2.v()
-#
-#         # Factor creation
-#         projection_uncertainty = gtsam.noiseModel.Isotropic.Sigma(3, 1.0)
-#
-#         # Projections list
-#         left_projections.append([xl, y])
-#         right_projections.append([xr, y])
-#
-#     # Compute projection euclidean error
-#     left_proj_dist = utilities.euclidean_dist(np.array(left_projections), np.array(left_locations))
-#     right_proj_dist = utilities.euclidean_dist(np.array(right_projections), np.array(right_locations))
-#     total_proj_dist = (left_proj_dist + right_proj_dist) / 2
-#
-#     fig, ax = plt.subplots(figsize=(10, 7))
-#
-#     ax.set_title(f"Reprojection error for track: {track.track_id}")
-#     plt.scatter(range(len(total_proj_dist)), total_proj_dist)
-#     plt.ylabel('Error')
-#     plt.xlabel('Frames')
-#     fig.show()
-#     fig.savefig(fr"plots/ex5/gtsam_reprojection_error/gtsam_reprojection_track_error {track.track_id}.png")
-#     plt.close(fig)
-#
-#     return total_proj_dist
-
-
 if __name__ == '__main__':
     db = ex4.build_data()
     # 5.1
-    track = utilities.get_track_in_len(db, 40, False)
+    track = utilities.get_track_in_len(db, 20, False)
     triangulate_from_last_frame_and_project_to_all_frames(db, track)
     # triangulate_from_last_frame_and_project_to_all_frames_repo(db, track)
 
