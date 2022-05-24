@@ -273,14 +273,14 @@ if __name__ == '__main__':
     graph, initial_estimate = adjust_bundle(db, keyframe1, keyframe2, [])
     factor_error_before_optimization = graph.error(initial_estimate)
     plot_trajectory(fignum=0, values=initial_estimate)
-    set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory3D.png")
+    # set_axes_equal(0)
+    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory3D({keyframe1, keyframe2}).png")
 
     optimized_estimation = optimize_graph(graph, initial_estimate)
     factor_error_after_optimization = graph.error(optimized_estimation)
 
     accum_scene(optimized_estimation, plot=True)
-    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory2D.png")
+    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory2D({keyframe1, keyframe2}).png")
 
     # print("First Bundle Errors:")
     # print("Error before optimization: ", factor_error_before_optimization)
