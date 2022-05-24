@@ -1,11 +1,11 @@
-import gtsam
-import matplotlib.pyplot as plt
-from gtsam import symbol
-from gtsam.utils.plot import plot_trajectory, set_axes_equal
 import ex4
 import utilities
 import numpy as np
 import exs_plots
+import gtsam
+import matplotlib.pyplot as plt
+from gtsam import symbol
+from gtsam.utils.plot import plot_trajectory, set_axes_equal
 
 
 # todo maybe in ex4 every track is missing the last frame
@@ -247,11 +247,17 @@ if __name__ == '__main__':
     # triangulate_from_last_frame_and_project_to_all_frames(db, track)
 
     # 5.2
-    graph, initial_estimate = adjust_bundle(db, 0, 10, [])
-    # factor_error_before_optimization = graph.error(initial_estimate)
+    keyframe1, keyframe2 = 0, 10
+    graph, initial_estimate = adjust_bundle(db, keyframe1, keyframe2, [])
+    factor_error_before_optimization = graph.error(initial_estimate)
     plot_trajectory(fignum=0, values=initial_estimate)
-    set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/factor_error_after_optimization.png")
+    # set_axes_equal(0)
+    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/factor_error_after_optimization_{keyframe1}:{keyframe2}.png")
 
     optimized_estimation = optimize_graph(graph, initial_estimate)
     factor_error_after_optimization = graph.error(optimized_estimation)
+
+
+    # print("First Bundle Errors:")
+    # print("Error before optimization: ", factor_error_before_optimization)
+    # print("Error after optimization: ", factor_error_after_optimization)
