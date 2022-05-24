@@ -271,42 +271,56 @@ def accum_scene(values, global_trans=None, plot=False):
     ax.scatter(camera_loc[:, 0], camera_loc[:, -1], c='r', s=5)
 
 
+# ----------------------------------------------------5.3---------------------------------------------------------------
+
 def bundle_adjustment(db, keyframes):
+    import tqdm
     computed_tracks = []
-    for keyframe1, keyframe2 in keyframes:
-        adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+    cameras = [gtsam.Pose3()]
+    landmarks = []
+
+    for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
+        graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+
+        # self.__bundles_lst[i].create_factor_graph()
+        # self.__bundles_lst[i].optimize()
+        # cameras.append(self.__bundles_lst[i].get_optimized_cameras_p3d())
+        # landmarks.append(
+        # self.__bundles_lst[i].get_optimized_landmarks_p3d())  # Todo: check if list of numpy arrays is ok
+
+    return np.array(cameras), landmarks
 
 
 def main():
     db = ex4.build_data()
-    # # 5.1
-    # # track = utilities.get_track_in_len(db, 20, False)
-    # # triangulate_from_last_frame_and_project_to_all_frames(db, track)
-    #
-    # # 5.2
-    # keyframe1, keyframe2 = 0, 4
-    # graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, [])
-    # factor_error_before_optimization = graph.error(initial_estimate)
-    # plot_trajectory(fignum=0, values=initial_estimate)
-    # # set_axes_equal(0)
-    # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
-    #
-    # optimized_estimation = optimize_graph(graph, initial_estimate)
-    # bundle_data.set_optimized_values(optimized_estimation)
-    # factor_error_after_optimization = graph.error(optimized_estimation)
-    #
-    # # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
-    #
-    # accum_scene(optimized_estimation, plot=True)
-    # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
-    #
-    # # print("First Bundle Errors:")
-    # # print("Error before optimization: ", factor_error_before_optimization)
-    # # print("Error after optimization: ", factor_error_after_optimization)
+    # 5.1
+    # track = utilities.get_track_in_len(db, 20, False)
+    # triangulate_from_last_frame_and_project_to_all_frames(db, track)
+
+    # 5.2
+    keyframe1, keyframe2 = 0, 4
+    graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, [])
+    factor_error_before_optimization = np.log(graph.error(initial_estimate))
+    plot_trajectory(fignum=0, values=initial_estimate)
+    # set_axes_equal(0)
+    plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
+
+    optimized_estimation = optimize_graph(graph, initial_estimate)
+    bundle_data.set_optimized_values(optimized_estimation)
+    factor_error_after_optimization = np.log(graph.error(optimized_estimation))
+
+    # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+
+    accum_scene(optimized_estimation, plot=True)
+    plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
+
+    print("First Bundle Errors:")
+    print("Error before optimization: ", factor_error_before_optimization)
+    print("Error after optimization: ", factor_error_after_optimization)
 
     # 5.3
     bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
-                                    i + 10 <= 3449])
+                                     i + 10 <= 3449])
 
 
 if __name__ == '__main__':
