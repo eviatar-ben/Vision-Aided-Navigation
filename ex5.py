@@ -182,7 +182,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
+def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -323,6 +323,7 @@ def main():
     # 5.3
     bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
                                      i + 10 <= 3449])
+
 
 
 if __name__ == '__main__':
