@@ -309,7 +309,7 @@ def main():
     bundle_data.set_optimized_values(optimized_estimation)
     factor_error_after_optimization = np.log(graph.error(optimized_estimation))
 
-    # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+    exs_plots.plot_left_cam_2d_trajectory(bundle_data)
 
     accum_scene(optimized_estimation, plot=True)
     plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
