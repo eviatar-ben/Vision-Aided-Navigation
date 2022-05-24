@@ -240,6 +240,28 @@ def optimize_graph(graph, initial_estimate):
     return result
 
 
+def accum_scene(values, global_trans=None, plot=False):
+    if global_trans is None:
+        global_trans = gtsam.Pose3()
+    camera_loc = []
+    points = []
+    for key in values.keys():
+        try:
+            p = global_trans.transformFrom(values.atPoint3(key))
+            points.append(p)
+        except RuntimeError:  # the key is for a Pose3, not a Point3
+            t = global_trans.compose(values.atPose3(key)).translation()
+            camera_loc.append(t)
+
+    if not plot:
+        return np.array(camera_loc), np.array(points)
+    ax = plt.figure().gca()
+    camera_loc = np.array(camera_loc)
+    points = np.array(points)
+    ax.scatter(points[:, 0], points[:, -1], c='c', s=3)
+    ax.scatter(camera_loc[:, 0], camera_loc[:, -1], c='r', s=5)
+
+
 if __name__ == '__main__':
     db = ex4.build_data()
     # 5.1
@@ -251,7 +273,10 @@ if __name__ == '__main__':
     # factor_error_before_optimization = graph.error(initial_estimate)
     plot_trajectory(fignum=0, values=initial_estimate)
     set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/factor_error_after_optimization.png")
+    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory3D.png")
 
     optimized_estimation = optimize_graph(graph, initial_estimate)
     factor_error_after_optimization = graph.error(optimized_estimation)
+
+    accum_scene(optimized_estimation, plot=True)
+    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory2D.png")
