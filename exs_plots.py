@@ -414,3 +414,29 @@ def plot_factor_as_func_of_re_projection_error_graph(factor_projection_errors, t
         f"plots/ex5/factor_error_reprojection_func/"
         f"Factor error as a function of a reprojection error {track.track_id}.png")
     plt.close(fig)
+
+
+def plot_left_cam_2d_trajectory(bundle_data, title=""):
+    """
+    Compare the left cameras relative 2d positions to the ground truth
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot()
+
+    cameras = [bundle_data.get_optimized_cameras_p3d()]
+    landmarks = [bundle_data.get_optimized_landmarks_p3d()]
+
+    ax.set_title(f"{title} Left cameras and landmarks 2d trajectory of {len(cameras)} bundles")
+
+    ax.scatter(landmarks[:, 0], landmarks[:, 2], s=1, c='orange', label="Landmarks")
+
+    ax.scatter(cameras[:, 0], cameras[:, 2], s=1, c='red', label="Cameras")
+    ax.legend(loc="upper right")
+    ax.set_xlim(-200, 350)
+    ax.set_ylim(-100, 500)
+
+    # ax.set_xlim(-5, 5)
+    # ax.set_ylim(-5, 50)
+
+    fig.savefig(f"plots/ex5/2D_trajectory.png")
+    plt.close(fig)
