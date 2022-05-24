@@ -1,9 +1,10 @@
+import numpy as np
+import matplotlib.pyplot as plt
 import ex4
 import utilities
-import numpy as np
 import exs_plots
+from BundleData import BundleData
 import gtsam
-import matplotlib.pyplot as plt
 from gtsam import symbol
 from gtsam.utils.plot import plot_trajectory, set_axes_equal
 
@@ -141,8 +142,9 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
 
 # ----------------------------------------------------5.2---------------------------------------------------------------
 
-def add_track_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from, gtsam_calib_mat,
-                      initial_estimate):
+def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from,
+                      gtsam_calib_mat,
+                      initial_estimate, landmark_symbols):
     frames_in_track = [frame for frame in track.frames_by_ids.values()]
 
     # Track's locations in frames_in_window
@@ -163,6 +165,7 @@ def add_track_factors(graph, track, first_frame_ind, last_frame_ind, gtsam_frame
 
     # Add landmark symbol to "values" dictionary
     p3d_sym = symbol('q', track.track_id)
+    landmark_symbols.add(p3d_sym)
     initial_estimate.insert(p3d_sym, gtsam_p3d)
 
     for i, frame in enumerate(frames_in_track):
@@ -183,6 +186,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
+    cameras_symbols, landmark_symbols = set(), set()
 
     # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
     pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
@@ -196,6 +200,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     cur_cam_pose = None
     for frame_id, frame in zip(range(keyframe1, keyframe2), frames_in_bundle):
         left_pose_symbol = symbol("c", frame.frame_id)
+        cameras_symbols.add(left_pose_symbol)
         # first frame
         if frame_id == keyframe1:
             first_pose = gtsam.Pose3()
@@ -228,10 +233,14 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
         # todo : can go out from the loop
         gtsam_last_cam = gtsam.StereoCamera(gtsam_left_cam_pose, k)
-        add_track_factors(graph, track, keyframe1, keyframe2, gtsam_last_cam, k, initial_estimate)  # Todo: as before
+        add_track_factors(db, graph, track, keyframe1, keyframe2, gtsam_last_cam, k, initial_estimate,
+                          landmark_symbols)  # Todo: as before
 
         computed_tracks.append(track.track_id)
-    return graph, initial_estimate
+
+    bundle_data = BundleData(keyframe1, keyframe2, cameras_symbols, landmark_symbols, graph, initial_estimate)
+
+    return graph, initial_estimate, bundle_data
 
 
 def optimize_graph(graph, initial_estimate):
@@ -262,26 +271,43 @@ def accum_scene(values, global_trans=None, plot=False):
     ax.scatter(camera_loc[:, 0], camera_loc[:, -1], c='r', s=5)
 
 
-if __name__ == '__main__':
+def bundle_adjustment(db, keyframes):
+    computed_tracks = []
+    for keyframe1, keyframe2 in keyframes:
+        adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+
+
+def main():
     db = ex4.build_data()
-    # 5.1
-    # track = utilities.get_track_in_len(db, 20, False)
-    # triangulate_from_last_frame_and_project_to_all_frames(db, track)
+    # # 5.1
+    # # track = utilities.get_track_in_len(db, 20, False)
+    # # triangulate_from_last_frame_and_project_to_all_frames(db, track)
+    #
+    # # 5.2
+    # keyframe1, keyframe2 = 0, 4
+    # graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, [])
+    # factor_error_before_optimization = graph.error(initial_estimate)
+    # plot_trajectory(fignum=0, values=initial_estimate)
+    # # set_axes_equal(0)
+    # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
+    #
+    # optimized_estimation = optimize_graph(graph, initial_estimate)
+    # bundle_data.set_optimized_values(optimized_estimation)
+    # factor_error_after_optimization = graph.error(optimized_estimation)
+    #
+    # # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+    #
+    # accum_scene(optimized_estimation, plot=True)
+    # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
+    #
+    # # print("First Bundle Errors:")
+    # # print("Error before optimization: ", factor_error_before_optimization)
+    # # print("Error after optimization: ", factor_error_after_optimization)
 
-    # 5.2
-    keyframe1, keyframe2 = 0, 10
-    graph, initial_estimate = adjust_bundle(db, keyframe1, keyframe2, [])
-    factor_error_before_optimization = graph.error(initial_estimate)
-    plot_trajectory(fignum=0, values=initial_estimate)
-    # set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory3D({keyframe1, keyframe2}).png")
+    # 5.3
+    bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
+                                    i + 10 <= 3449])
 
-    optimized_estimation = optimize_graph(graph, initial_estimate)
-    factor_error_after_optimization = graph.error(optimized_estimation)
 
-    accum_scene(optimized_estimation, plot=True)
-    plt.savefig(fr"plots/ex5/Factor_error_after_optimization/Trajectory2D({keyframe1, keyframe2}).png")
-
-    # print("First Bundle Errors:")
-    # print("Error before optimization: ", factor_error_before_optimization)
-    # print("Error after optimization: ", factor_error_after_optimization)
+if __name__ == '__main__':
+    main()
