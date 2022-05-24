@@ -178,9 +178,10 @@ def triangulate_and_project(db, track, frames):
 
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
     last_frame_feature_l = left_locations[-1]
+    last_frame_feature_r = right_locations[-1]
+
     xl = last_frame_feature_l[0]
     yl = last_frame_feature_l[1]
-    last_frame_feature_r = right_locations[-1]
     xr = last_frame_feature_r[0]
     gtsam_stereo_point2_for_triangulation = gtsam.StereoPoint2(xl, xr, yl)
 
@@ -225,8 +226,9 @@ def triangulate_and_project(db, track, frames):
 
     projection_factor_errors = utilities.get_projection_factors_errors(factors, values)
 
+    # plots:
     exs_plots.present_gtsam_re_projection_track_error(total_proj_dist, track)
-    exs_plots.plot_factor_re_projection_error_graph(projection_factor_errors, total_proj_dist, track)
+    exs_plots.plot_factor_re_projection_error_graph(projection_factor_errors, track)
     exs_plots.plot_factor_as_func_of_re_projection_error_graph(projection_factor_errors, total_proj_dist, track)
 
 
