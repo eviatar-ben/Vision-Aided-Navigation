@@ -147,7 +147,6 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
                       initial_estimate, landmark_symbols):
     track_frames_inside_the_bundle = [frame for frame in track.frames_by_ids.values()
                                       if first_frame_ind <= frame.frame_id <= last_frame_ind]
-
     # Track's locations in frames_in_window
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
     # left_locations = track.get_left_locations_in_specific_frames(first_frame_ind, last_frame_ind)
@@ -183,7 +182,9 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
+def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
+    if computed_tracks is None:
+        computed_tracks = list()
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -192,14 +193,13 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
     pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
         np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
-    tracks_id_in_bundle = set()
 
     frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 + 1)]
     first_frame = frames_in_bundle[0]
-
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
     for frame_id, frame in zip(range(keyframe1, keyframe2 + 1), frames_in_bundle):
+
         assert frame_id == frame.frame_id
         left_pose_symbol = symbol("c", frame.frame_id)
         cameras_symbols.add(left_pose_symbol)
@@ -219,10 +219,10 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
 
     # For each track create measurements factors
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
+    # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
-
     for track in tracks_in_frame:
         # # Check that this track has bot been computed yet and that it's length is satisfied
         # if track.get_id() in self.__computed_tracks or track.get_last_frame_ind() < self.__second_key_frame:
@@ -283,7 +283,6 @@ def bundle_adjustment(db, keyframes):
     cameras = [gtsam.Pose3()]
 
     landmarks = []
-
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
         try:
             _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
@@ -291,7 +290,11 @@ def bundle_adjustment(db, keyframes):
             cameras.append(bundle_data.get_optimized_cameras_p3d())
             landmarks.append(bundle_data.get_optimized_landmarks_p3d())
         except:
-            print(keyframe1, keyframe2)
+            print(f"problem with bundle: {keyframe1, keyframe2}")
+
+    cameras_3d = utilities.gtsam_left_cameras_trajectory(cameras)
+    exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
+                                                                                 landmarks=landmarks)
     return np.array(cameras), landmarks
 
 
@@ -317,10 +320,10 @@ def main():
     # utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
     # 5.3
-    # bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
-    #                                  i + 10 <= 3449])
+    # bundle_adjustment(db, keyframes=[(i, i + 5) if i + 5 <= 3449 else (i, i + 3449) for i in range(0, 3449, 5) if
+    #                                  i + 5 <= 3449])
 
-    adjust_bundle(db, 150, 155, [])
+    bundle_adjustment(db, utilities.fives)
 
     print("finished")
 
