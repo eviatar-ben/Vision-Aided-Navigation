@@ -194,12 +194,16 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
         np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
     tracks_id_in_bundle = set()
 
-    frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2)]
+    frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 +1)]
     first_frame = frames_in_bundle[0]
 
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
-    for frame_id, frame in zip(range(keyframe1, keyframe2), frames_in_bundle):
+    for frame_id, frame in zip(range(keyframe1, keyframe2 +1), frames_in_bundle):
+        assert frame_id == frame.frame_id
+        print(frame.frame_id)
+        print(frame_id)
+        print()
         left_pose_symbol = symbol("c", frame.frame_id)
         cameras_symbols.add(left_pose_symbol)
         # first frame
@@ -219,8 +223,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     # For each track create measurements factors
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
-    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-                       db.tracks[track_id].get_last_frame_id() < keyframe2]
+    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
 
     for track in tracks_in_frame:
@@ -317,7 +320,7 @@ def main():
     # bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
     #                                  i + 10 <= 3449])
 
-    adjust_bundle(db, 10, 20, [])
+    adjust_bundle(db, 0, 20, [])
 
 
 if __name__ == '__main__':
