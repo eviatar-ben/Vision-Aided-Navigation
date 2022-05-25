@@ -182,7 +182,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=[]):
+def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -237,7 +237,6 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=[]):
                           landmark_symbols)  # Todo: as before
 
         computed_tracks.append(track.track_id)
-
 
     optimized_estimation = optimize_graph(graph, initial_estimate)
     bundle_data = BundleData(keyframe1, keyframe2, cameras_symbols, landmark_symbols, graph, initial_estimate)
