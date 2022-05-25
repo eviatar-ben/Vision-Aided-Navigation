@@ -44,6 +44,7 @@ def triangulate_from_last_frame(first_frame, last_frame):
     """
 
     # C_first =  World -> C_first
+
     # C_first-1 = C_first -> World
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)
 
@@ -145,8 +146,8 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
 def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from,
                       gtsam_calib_mat,
                       initial_estimate, landmark_symbols):
-    frames_in_track = [frame for frame in track.frames_by_ids.values()]
-
+    track_frames_inside_the_bundle = [frame for frame in track.frames_by_ids.values()
+                                      if first_frame_ind <= frame.frame_id <= last_frame_ind]
     # Track's locations in frames_in_window
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
     # left_locations = track.get_left_locations_in_specific_frames(first_frame_ind, last_frame_ind)
@@ -168,7 +169,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     landmark_symbols.add(p3d_sym)
     initial_estimate.insert(p3d_sym, gtsam_p3d)
 
-    for i, frame in enumerate(frames_in_track):
+    for i, frame in enumerate(track_frames_inside_the_bundle):
         # Measurement values
         measure_xl, measure_xr, measure_y = left_locations[i][0], right_locations[i][0], left_locations[i][1]
         gtsam_measurement_pt2 = gtsam.StereoPoint2(measure_xl, measure_xr, measure_y)
@@ -182,7 +183,9 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
+def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
+    if computed_tracks is None:
+        computed_tracks = list()
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -191,14 +194,14 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
     # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
     pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
         np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
-    tracks_id_in_bundle = set()
 
-    frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2)]
+    frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 + 1)]
     first_frame = frames_in_bundle[0]
-
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
-    for frame_id, frame in zip(range(keyframe1, keyframe2), frames_in_bundle):
+    for frame_id, frame in zip(range(keyframe1, keyframe2 + 1), frames_in_bundle):
+
+        assert frame_id == frame.frame_id
         left_pose_symbol = symbol("c", frame.frame_id)
         cameras_symbols.add(left_pose_symbol)
         # first frame
@@ -217,11 +220,10 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
 
     # For each track create measurements factors
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
+    # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
-    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-                       db.tracks[track_id].get_last_frame_id() < keyframe2]
+    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
-
     for track in tracks_in_frame:
         # # Check that this track has bot been computed yet and that it's length is satisfied
         # if track.get_id() in self.__computed_tracks or track.get_last_frame_ind() < self.__second_key_frame:
@@ -238,7 +240,10 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
 
         computed_tracks.append(track.track_id)
 
+    optimized_estimation = optimize_graph(graph, initial_estimate)
     bundle_data = BundleData(keyframe1, keyframe2, cameras_symbols, landmark_symbols, graph, initial_estimate)
+
+    bundle_data.set_optimized_values(optimized_estimation)
 
     return graph, initial_estimate, bundle_data
 
@@ -277,53 +282,51 @@ def bundle_adjustment(db, keyframes):
     import tqdm
     computed_tracks = []
     cameras = [gtsam.Pose3()]
+
     landmarks = []
-
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
-        graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+        try:
+            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
 
-        # self.__bundles_lst[i].create_factor_graph()
-        # self.__bundles_lst[i].optimize()
-        # cameras.append(self.__bundles_lst[i].get_optimized_cameras_p3d())
-        # landmarks.append(
-        # self.__bundles_lst[i].get_optimized_landmarks_p3d())  # Todo: check if list of numpy arrays is ok
+            cameras.append(bundle_data.get_optimized_cameras_p3d())
+            landmarks.append(bundle_data.get_optimized_landmarks_p3d())
+        except:
+            print(f"problem with bundle: {keyframe1, keyframe2}")
 
+    cameras_3d = utilities.gtsam_left_cameras_trajectory(cameras)
+    exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
+                                                                                 landmarks=landmarks)
     return np.array(cameras), landmarks
 
 
 def main():
     db = ex4.build_data()
-    # 5.1
+    # # 5.1
     # track = utilities.get_track_in_len(db, 20, False)
     # triangulate_from_last_frame_and_project_to_all_frames(db, track)
-
-    # 5.2
-
-    keyframe1, keyframe2 = 0, 4
-    graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, [])
-    factor_error_before_optimization = np.log(graph.error(initial_estimate))
-    plot_trajectory(fignum=0, values=initial_estimate)
-    # set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
-
-    optimized_estimation = optimize_graph(graph, initial_estimate)
-
-    bundle_data.set_optimized_values(optimized_estimation)
-    factor_error_after_optimization = np.log(graph.error(optimized_estimation))
-
-    exs_plots.plot_left_cam_2d_trajectory(bundle_data)
-
-    accum_scene(optimized_estimation, plot=True)
-    plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
-
-    print("First Bundle Errors:")
-    print("Error before optimization: ", factor_error_before_optimization)
-    print("Error after optimization: ", factor_error_after_optimization)
+    # # 5.2
+    # keyframe1, keyframe2 = 12, 14
+    # graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
+    # factor_error_before_optimization = np.log(graph.error(initial_estimate))  # log-likelihood
+    # # ----3D Trajectory----:
+    # plot_trajectory(fignum=0, values=initial_estimate)
+    # # set_axes_equal(0)
+    # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
+    # factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
+    # # ----2D Trajectory----:
+    # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+    # accum_scene(bundle_data.optimized_values, plot=True)
+    # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
+    # # ----Factor Error Diffs:----:
+    # utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
     # 5.3
-    bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
-                                     i + 10 <= 3449])
+    # bundle_adjustment(db, keyframes=[(i, i + 5) if i + 5 <= 3449 else (i, i + 3449) for i in range(0, 3449, 5) if
+    #                                  i + 5 <= 3449])
 
+    bundle_adjustment(db, utilities.fives)
+
+    print("finished")
 
 
 if __name__ == '__main__':
