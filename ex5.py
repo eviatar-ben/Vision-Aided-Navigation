@@ -194,16 +194,13 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks, window_siz=10):
         np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
     tracks_id_in_bundle = set()
 
-    frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 +1)]
+    frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 + 1)]
     first_frame = frames_in_bundle[0]
 
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)  # first cam -> world
     cur_cam_pose = None
-    for frame_id, frame in zip(range(keyframe1, keyframe2 +1), frames_in_bundle):
+    for frame_id, frame in zip(range(keyframe1, keyframe2 + 1), frames_in_bundle):
         assert frame_id == frame.frame_id
-        print(frame.frame_id)
-        print(frame_id)
-        print()
         left_pose_symbol = symbol("c", frame.frame_id)
         cameras_symbols.add(left_pose_symbol)
         # first frame
@@ -284,14 +281,17 @@ def bundle_adjustment(db, keyframes):
     import tqdm
     computed_tracks = []
     cameras = [gtsam.Pose3()]
+
     landmarks = []
 
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
-        _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+        try:
+            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
 
-        cameras.append(bundle_data.get_optimized_cameras_p3d())
-        landmarks.append(bundle_data.get_optimized_landmarks_p3d())
-
+            cameras.append(bundle_data.get_optimized_cameras_p3d())
+            landmarks.append(bundle_data.get_optimized_landmarks_p3d())
+        except:
+            print(keyframe1, keyframe2)
     return np.array(cameras), landmarks
 
 
@@ -320,7 +320,9 @@ def main():
     # bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
     #                                  i + 10 <= 3449])
 
-    adjust_bundle(db, 0, 20, [])
+    adjust_bundle(db, 150, 155, [])
+
+    print("finished")
 
 
 if __name__ == '__main__':
