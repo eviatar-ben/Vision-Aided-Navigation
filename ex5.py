@@ -145,7 +145,8 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
 def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from,
                       gtsam_calib_mat,
                       initial_estimate, landmark_symbols):
-    frames_in_track = [frame for frame in track.frames_by_ids.values()]
+    track_frames_inside_the_bundle = [frame for frame in track.frames_by_ids.values()
+                                      if first_frame_ind <= frame.frame_id <= last_frame_ind]
 
     # Track's locations in frames_in_window
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
@@ -168,7 +169,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     landmark_symbols.add(p3d_sym)
     initial_estimate.insert(p3d_sym, gtsam_p3d)
 
-    for i, frame in enumerate(frames_in_track):
+    for i, frame in enumerate(track_frames_inside_the_bundle):
         # Measurement values
         measure_xl, measure_xr, measure_y = left_locations[i][0], right_locations[i][0], left_locations[i][1]
         gtsam_measurement_pt2 = gtsam.StereoPoint2(measure_xl, measure_xr, measure_y)
@@ -293,28 +294,30 @@ def bundle_adjustment(db, keyframes):
 
 def main():
     db = ex4.build_data()
-    # 5.1
+    # # 5.1
     # track = utilities.get_track_in_len(db, 20, False)
     # triangulate_from_last_frame_and_project_to_all_frames(db, track)
-    # 5.2
-    keyframe1, keyframe2 = 12, 14
-    graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
-    factor_error_before_optimization = np.log(graph.error(initial_estimate))  # log-likelihood
-    # ----3D Trajectory----:
-    plot_trajectory(fignum=0, values=initial_estimate)
-    # set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
-    factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
-    # ----2D Trajectory----:
-    exs_plots.plot_left_cam_2d_trajectory(bundle_data)
-    accum_scene(bundle_data.optimized_values, plot=True)
-    plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
-    # ----Factor Error Diffs:----:
-    utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
+    # # 5.2
+    # keyframe1, keyframe2 = 12, 14
+    # graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
+    # factor_error_before_optimization = np.log(graph.error(initial_estimate))  # log-likelihood
+    # # ----3D Trajectory----:
+    # plot_trajectory(fignum=0, values=initial_estimate)
+    # # set_axes_equal(0)
+    # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
+    # factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
+    # # ----2D Trajectory----:
+    # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+    # accum_scene(bundle_data.optimized_values, plot=True)
+    # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
+    # # ----Factor Error Diffs:----:
+    # utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
     # 5.3
     # bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
     #                                  i + 10 <= 3449])
+
+    adjust_bundle(db, 10, 20, [])
 
 
 if __name__ == '__main__':
