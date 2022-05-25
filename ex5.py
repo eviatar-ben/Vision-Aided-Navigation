@@ -277,7 +277,7 @@ def accum_scene(values, global_trans=None, plot=False):
 
 # ----------------------------------------------------5.3---------------------------------------------------------------
 
-def bundle_adjustment(db, keyframes):
+def adjust_all_bundles(db, keyframes):
     import tqdm
     computed_tracks = []
     cameras = [gtsam.Pose3()]
@@ -292,15 +292,31 @@ def bundle_adjustment(db, keyframes):
         except:
             print(f"problem with bundle: {keyframe1, keyframe2}")
 
-    cameras_3d = utilities.gtsam_left_cameras_trajectory(cameras)
-    exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
-                                                                                 landmarks=landmarks)
     return np.array(cameras), landmarks
+
+
+def bundle_adjustment(db):
+    # bundle_adjustment:
+    # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle = adjust_all_bundles(db, utilities.fives)
+    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle = adjust_all_bundles(db, [(0, 5), (5, 10)])
+
+    # convert relative landmarks and cameras poses to world coordinate:
+    gtsam_cameras_rel_to_world = utilities.gtsam_left_cameras_relative_trans(gtsam_cameras_rel_to_bundle)
+    landmarks_rel_to_world = utilities.compute_landmarks_in_relate_first_movie_camera(gtsam_cameras_rel_to_world,
+                                                                                      all_landmarks_rel_to_bundle)
+
+    ground_truth = np.array(utilities.get_ground_truth_transformations())[utilities.fives]
+    cameras_gt_3d = utilities.left_cameras_trajectory(ground_truth)
+    # plot:
+    cameras_3d = utilities.gtsam_left_cameras_trajectory(gtsam_cameras_rel_to_world)
+    exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
+                                                                                 landmarks=landmarks_rel_to_world,
+                                                                                 cameras_gt=cameras_gt_3d)
 
 
 def main():
     db = ex4.build_data()
-    # # 5.1
+    # 5.1
     # track = utilities.get_track_in_len(db, 20, False)
     # triangulate_from_last_frame_and_project_to_all_frames(db, track)
     # # 5.2
@@ -313,8 +329,7 @@ def main():
     # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
     # factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
     # # ----2D Trajectory----:
-    # exs_plots.plot_left_cam_2d_trajectory(
-    # )
+    # exs_plots.plot_left_cam_2d_trajectory(bundle_data )
     # accum_scene(bundle_data.optimized_values, plot=True)
     # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
     # # ----Factor Error Diffs:----:
@@ -324,7 +339,7 @@ def main():
     # bundle_adjustment(db, keyframes=[(i, i + 5) if i + 5 <= 3449 else (i, i + 3449) for i in range(0, 3449, 5) if
     #                                  i + 5 <= 3449])
 
-    bundle_adjustment(db, utilities.fives)
+    bundle_adjustment(db)
 
     # adjust_bundle(db, 150, 160)
     print("finished")

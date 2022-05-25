@@ -305,7 +305,70 @@ def gtsam_left_cameras_trajectory(relative_T_arr):
     """
     relative_cameras_pos_arr = []
     for t in relative_T_arr:
-        relative_cameras_pos_arr.append(t)
+        relative_cameras_pos_arr.append(t.translation())
+    return np.array(relative_cameras_pos_arr)
+
+
+def gtsam_left_cameras_relative_trans(T_arr):
+    relative_T_arr = []
+    last = T_arr[0]
+
+    for t in T_arr:
+        last = last.compose(t)
+        relative_T_arr.append(last)
+
+    return relative_T_arr
+
+
+def compute_landmarks_in_relate_first_movie_camera(cameras, landmarks):
+    def compute_landmarks_in_relate_first_camera(first_cam_in_bundle_rel_to_first_cam_in_movie, bundle_landmarks):
+        relative_to_first_cam_landmarks = []
+        for landmark in bundle_landmarks:
+            relative_to_first_cam_landmarks.append(
+                first_cam_in_bundle_rel_to_first_cam_in_movie.transformFrom(landmark))
+
+        return relative_to_first_cam_landmarks
+
+    relative_to_first_cam_landmarks = []
+    for bundle_camera, bundle_landmarks in zip(cameras, landmarks):
+        bundle_relative_to_first_cam_landmarks = compute_landmarks_in_relate_first_camera(bundle_camera,
+                                                                                          bundle_landmarks)
+        relative_to_first_cam_landmarks += bundle_relative_to_first_cam_landmarks
+
+    return np.array(relative_to_first_cam_landmarks)
+
+
+def get_ground_truth_transformations(left_cam_trans_path=r'../dataset/poses/00.txt', movie_len=3450):
+    """
+    Reads the ground truth transformations
+    :return: array of transformation
+    """
+    T_ground_truth_arr = []
+    with open(left_cam_trans_path) as f:
+        lines = f.readlines()
+    for i in range(movie_len):
+        left_mat = np.array(lines[i].split(" "))[:-1].astype(float).reshape((3, 4))
+        T_ground_truth_arr.append(left_mat)
+    return T_ground_truth_arr
+
+
+def left_cameras_trajectory(relative_T_arr):
+    """
+    Computes the left cameras 3d positions relative to the starting position
+    :param T_arr: relative to first camera transformations array
+    :return: numpy array with dimension num T_arr X 3
+    """
+
+    def relative_camera_pos(ex_cam_mat):
+        """
+        Finds and returns the Camera position at the "world" d2_points
+        :param ex_cam_mat: [Rotation mat|translation vec]
+        """
+        return -1 * ex_cam_mat[:, :3].T @ ex_cam_mat[:, 3]
+
+    relative_cameras_pos_arr = []
+    for t in relative_T_arr:
+        relative_cameras_pos_arr.append(relative_camera_pos(t))
     return np.array(relative_cameras_pos_arr)
 
 

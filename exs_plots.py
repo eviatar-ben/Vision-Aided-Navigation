@@ -426,7 +426,7 @@ def plot_left_cam_2d_trajectory(bundle_data, title=""):
     cameras = bundle_data.get_optimized_cameras_p3d()
     landmarks = bundle_data.get_optimized_landmarks_p3d()
 
-    ax.set_title(f"{title} Left cameras and landmarks 2d trajectory of {len(cameras)} bundles")
+    # ax.set_title(f"{title} Left cameras and landmarks 2d trajectory of {len(cameras)} bundles")
 
     ax.scatter(landmarks[:, 0], landmarks[:, 2], s=1, c='orange', label="Landmarks")
 

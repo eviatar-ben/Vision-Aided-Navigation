@@ -16,18 +16,27 @@ class BundleData:
     def set_optimized_values(self, optimized_values):
         self.optimized_values = optimized_values
 
-    # def get_optimized_cameras_p3d(self):
-    #     from gtsam import symbol
-    #     cam_pose = self.optimized_values.atPose3(symbol('c', self.keyframe2))
-    #     return cam_pose
-
     def get_optimized_cameras_p3d(self):
-        cameras_poses = []
-        for camera_sym in self.cameras_symbols:
-            cam_pose = self.optimized_values.atPose3(camera_sym)
-            cameras_poses.append(np.asarray([cam_pose.x(), cam_pose.y(), cam_pose.z()]))
+        import gtsam
+        from gtsam import symbol
+        cam_pose = self.optimized_values.atPose3(symbol('c', self.keyframe2))
+        return cam_pose
 
-        return np.asarray(cameras_poses)
+    # def get_optimized_cameras_p3d_version2(self):
+    #     cameras_poses = []
+    #     for camera_sym in self.cameras_symbols:
+    #         cam_pose = self.optimized_values.atPose3(camera_sym)
+    #         cameras_poses.append([cam_pose.x(), cam_pose.y(), cam_pose.z()])
+    #
+    #     return cameras_poses
+
+    # def get_optimized_cameras_p3d(self):
+    #     cameras_poses = []
+    #     for camera_sym in self.cameras_symbols:
+    #         cam_pose = self.optimized_values.atPose3(camera_sym)
+    #         cameras_poses.append(np.asarray([cam_pose.x(), cam_pose.y(), cam_pose.z()]))
+    #
+    #     return np.asarray(cameras_poses)
 
     def get_optimized_landmarks_p3d(self):
         landmarks = []
@@ -36,3 +45,4 @@ class BundleData:
             landmarks.append(landmark)
 
         return np.asarray(landmarks)
+
