@@ -44,6 +44,7 @@ def triangulate_from_last_frame(first_frame, last_frame):
     """
 
     # C_first =  World -> C_first
+
     # C_first-1 = C_first -> World
     first_frame_cam_to_world_ex_mat = utilities.reverse_ext(first_frame.global_extrinsic_mat)
 
