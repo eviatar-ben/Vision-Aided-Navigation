@@ -305,7 +305,7 @@ def gtsam_left_cameras_trajectory(relative_T_arr):
     """
     relative_cameras_pos_arr = []
     for t in relative_T_arr:
-        relative_cameras_pos_arr.append(t.translation())
+        relative_cameras_pos_arr.append(t)
     return np.array(relative_cameras_pos_arr)
 
 

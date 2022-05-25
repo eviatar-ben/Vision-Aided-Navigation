@@ -313,7 +313,8 @@ def main():
     # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
     # factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
     # # ----2D Trajectory----:
-    # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+    # exs_plots.plot_left_cam_2d_trajectory(
+    # )
     # accum_scene(bundle_data.optimized_values, plot=True)
     # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
     # # ----Factor Error Diffs:----:
@@ -325,6 +326,7 @@ def main():
 
     bundle_adjustment(db, utilities.fives)
 
+    # adjust_bundle(db, 150, 160)
     print("finished")
 
 
