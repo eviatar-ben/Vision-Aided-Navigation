@@ -206,6 +206,11 @@ def compute_reprojection_euclidean_dist(img_projected_pts, img_pts_coor):
 
 
 # -----------------------------------------------------5----------------------------------------------------------------
+def present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization):
+    print("First Bundle Errors:")
+    print("Error before optimization: ", factor_error_before_optimization)
+    print("Error after optimization: ", factor_error_after_optimization)
+
 
 def reverse_ext(ext):
     """

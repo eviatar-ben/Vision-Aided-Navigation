@@ -182,7 +182,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
+def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=[]):
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -238,7 +238,11 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks):
 
         computed_tracks.append(track.track_id)
 
+
+    optimized_estimation = optimize_graph(graph, initial_estimate)
     bundle_data = BundleData(keyframe1, keyframe2, cameras_symbols, landmark_symbols, graph, initial_estimate)
+
+    bundle_data.set_optimized_values(optimized_estimation)
 
     return graph, initial_estimate, bundle_data
 
@@ -280,13 +284,10 @@ def bundle_adjustment(db, keyframes):
     landmarks = []
 
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
-        graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+        _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
 
-        # self.__bundles_lst[i].create_factor_graph()
-        # self.__bundles_lst[i].optimize()
-        # cameras.append(self.__bundles_lst[i].get_optimized_cameras_p3d())
-        # landmarks.append(
-        # self.__bundles_lst[i].get_optimized_landmarks_p3d())  # Todo: check if list of numpy arrays is ok
+        cameras.append(bundle_data.get_optimized_cameras_p3d())
+        landmarks.append(bundle_data.get_optimized_landmarks_p3d())
 
     return np.array(cameras), landmarks
 
@@ -296,32 +297,25 @@ def main():
     # 5.1
     # track = utilities.get_track_in_len(db, 20, False)
     # triangulate_from_last_frame_and_project_to_all_frames(db, track)
-
     # 5.2
-    keyframe1, keyframe2 = 0, 4
-    graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2, [])
-    factor_error_before_optimization = np.log(graph.error(initial_estimate))
+    keyframe1, keyframe2 = 12, 14
+    graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
+    factor_error_before_optimization = np.log(graph.error(initial_estimate))  # log-likelihood
+    # ----3D Trajectory----:
     plot_trajectory(fignum=0, values=initial_estimate)
     # set_axes_equal(0)
     plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
-
-    optimized_estimation = optimize_graph(graph, initial_estimate)
-    bundle_data.set_optimized_values(optimized_estimation)
-    factor_error_after_optimization = np.log(graph.error(optimized_estimation))
-
+    factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
+    # ----2D Trajectory----:
     exs_plots.plot_left_cam_2d_trajectory(bundle_data)
-
-    accum_scene(optimized_estimation, plot=True)
+    accum_scene(bundle_data.optimized_values, plot=True)
     plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
-
-    print("First Bundle Errors:")
-    print("Error before optimization: ", factor_error_before_optimization)
-    print("Error after optimization: ", factor_error_after_optimization)
+    # ----Factor Error Diffs:----:
+    utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
     # 5.3
-    bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
-                                     i + 10 <= 3449])
-
+    # bundle_adjustment(db, keyframes=[(i, i + 10) if i + 10 <= 3449 else (i, i + 3449) for i in range(0, 3449, 10) if
+    #                                  i + 10 <= 3449])
 
 
 if __name__ == '__main__':
