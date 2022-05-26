@@ -366,8 +366,6 @@ def present_reprojection_error(db, track):
 # -----------------------------------------------------5----------------------------------------------------------------
 
 # 5.1
-
-
 def present_gtsam_re_projection_track_error(total_proj_dist, track):
     fig, ax = plt.subplots(figsize=(10, 7))
 
@@ -423,7 +421,9 @@ def plot_left_cam_2d_trajectory(bundle_data, title=""):
     fig = plt.figure()
     ax = fig.add_subplot()
 
-    cameras = bundle_data.get_optimized_cameras_p3d()
+    cameras = [bundle_data.get_optimized_cameras_p3d()]
+    cameras = utilities.gtsam_left_cameras_trajectory(cameras)
+    # cameras = utilities.gtsam_left_cameras_relative_trans(cameras)
     landmarks = bundle_data.get_optimized_landmarks_p3d()
 
     # ax.set_title(f"{title} Left cameras and landmarks 2d trajectory of {len(cameras)} bundles")
