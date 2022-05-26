@@ -384,6 +384,13 @@ def left_cameras_trajectory(relative_T_arr):
     return np.array(relative_cameras_pos_arr)
 
 
+def get_initial_estimate_cameras_poses(frames):
+    poses = []
+    for frame in frames:
+        ex_cam_mat = frame.global_extrinsic_mat
+        poses.append(-1 * ex_cam_mat[:, :3].T @ ex_cam_mat[:, 3])
+    return np.array(poses)
+
 # problems with
 # 150 155
 # 2845 2850

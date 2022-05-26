@@ -150,7 +150,6 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     # Track's locations in frames_in_window
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track,
                                                                                track_frames_inside_the_bundle)
-
     assert len(left_locations) == len(track_frames_inside_the_bundle)
     # Track's location at the Last frame for triangulations
     last_left_img_loc = left_locations[-1]
@@ -182,9 +181,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
         graph.add(factor)
 
 
-def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
-    if computed_tracks is None:
-        computed_tracks = list()
+def adjust_bundle(db, keyframe1, keyframe2):
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -215,7 +212,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
         initial_estimate.insert(left_pose_symbol, gtsam.Pose3(cur_cam_pose))
 
-    gtsam_left_cam_pose = gtsam.Pose3(cur_cam_pose)
+    gtsam_last_left_cam_pose = gtsam.Pose3(cur_cam_pose)
 
     # For each track create measurements factors
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
@@ -224,22 +221,13 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     # todo : pu kavor hacelev!!!!!!!!!!!!!!!!!1
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-    #                    db.tracks[track_id].get_last_frame_id() > keyframe2]
+    #                    db.tracks[track_id].get_last_frame_id() < keyframe2]
     for track in tracks_in_frame:
-        # # Check that this track has bot been computed yet and that it's length is satisfied
-        # if track.get_id() in self.__computed_tracks or track.get_last_frame_ind() < self.__second_key_frame:
-        #     continue
-
-        if track.track_id in computed_tracks:
-            continue
-
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
         # todo : can go out from the loop
-        gtsam_last_cam = gtsam.StereoCamera(gtsam_left_cam_pose, k)
+        gtsam_last_cam = gtsam.StereoCamera(gtsam_last_left_cam_pose, k)
         add_track_factors(db, graph, track, keyframe1, keyframe2, gtsam_last_cam, k, initial_estimate,
                           landmark_symbols)  # Todo: as before
-
-        computed_tracks.append(track.track_id)
 
     optimized_estimation = optimize_graph(graph, initial_estimate)
     bundle_data = BundleData(keyframe1, keyframe2, cameras_symbols, landmark_symbols, graph, initial_estimate)
@@ -281,13 +269,11 @@ def accum_scene(values, global_trans=None, plot=False):
 
 def adjust_all_bundles(db, keyframes):
     import tqdm
-    computed_tracks = []
     cameras = [gtsam.Pose3()]
-
     landmarks = []
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
         try:
-            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks=[])
+            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
 
             cameras.append(bundle_data.get_optimized_cameras_p3d())
             landmarks.append(bundle_data.get_optimized_landmarks_p3d())
@@ -300,20 +286,29 @@ def adjust_all_bundles(db, keyframes):
 def bundle_adjustment(db):
     # bundle_adjustment:
     gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle = adjust_all_bundles(db, utilities.fives)
-    # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle = adjust_all_bundles(db, [(0, 5), (5, 10)])
+
+    # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle , _= adjust_all_bundles(db, [(0, 5), (5, 10)])
 
     # convert relative landmarks and cameras poses to world coordinate:
     gtsam_cameras_rel_to_world = utilities.gtsam_left_cameras_relative_trans(gtsam_cameras_rel_to_bundle)
     landmarks_rel_to_world = utilities.compute_landmarks_in_relate_first_movie_camera(gtsam_cameras_rel_to_world,
                                                                                       all_landmarks_rel_to_bundle)
+    # ground truth:
     ground_truth_keyframes = [i[0] for i in utilities.fives]
     ground_truth = np.array(utilities.get_ground_truth_transformations())[ground_truth_keyframes]
     cameras_gt_3d = utilities.left_cameras_trajectory(ground_truth)
+
+    # initial estimation:
+    initial_estimate_cameras_poses = utilities.get_initial_estimate_cameras_poses(db.frames.values())[
+        ground_truth_keyframes]
+
     # plot:
     cameras_3d = utilities.gtsam_left_cameras_trajectory(gtsam_cameras_rel_to_world)
     exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
                                                                                  landmarks=landmarks_rel_to_world,
-                                                                                 cameras_gt=cameras_gt_3d)
+                                                                                 cameras_gt=cameras_gt_3d,
+                                                                                 initial_estimate_poses=
+                                                                                 initial_estimate_cameras_poses)
 
 
 def main():
