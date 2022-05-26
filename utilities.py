@@ -384,6 +384,13 @@ def left_cameras_trajectory(relative_T_arr):
     return np.array(relative_cameras_pos_arr)
 
 
+def get_initial_estimate_cameras_poses(frames):
+    poses = []
+    for frame in frames:
+        ex_cam_mat = frame.global_extrinsic_mat
+        poses.append(-1 * ex_cam_mat[:, :3].T @ ex_cam_mat[:, 3])
+    return np.array(poses)
+
 # problems with
 # 150 155
 # 2845 2850
@@ -571,7 +578,3 @@ tens2 = [(0, 10), (10, 20), (20, 30), (30, 40), (40, 50), (50, 60), (60, 70), (7
          (3250, 3260), (3260, 3270), (3270, 3280), (3280, 3290), (3290, 3300), (3300, 3310), (3310, 3320), (3320, 3330),
          (3330, 3340), (3340, 3350), (3350, 3360), (3360, 3370), (3370, 3380), (3380, 3390), (3390, 3400), (3400, 3410),
          (3410, 3420), (3420, 3430), (3430, 3440)]
-
-
-def get_initial_estimation_trajectory():
-    return None

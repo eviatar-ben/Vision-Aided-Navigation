@@ -457,17 +457,17 @@ def plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=N
         ax.scatter(landmarks[:, 0], landmarks[:, 2], s=1, c='orange', label="Landmarks")
 
     if cameras is not None:
-        ax.scatter(cameras[:, 0], cameras[:, 2], s=1, c='red', label="Cameras")
+        ax.scatter(cameras[:, 0], cameras[:, 2], s=1, c='red', label="Cameras after optimization")
 
     if cameras_gt is not None:
         ax.scatter(cameras_gt[:, 0], cameras_gt[:, 2], s=1, c='cyan', label="Cameras ground truth")
 
     if initial_estimate_poses is not None:
-        ax.scatter(initial_estimate_poses[:, 0], initial_estimate_poses[:, 2], s=1, c='pink', label="Initial estimate")
+        ax.scatter(initial_estimate_poses[:, 0], initial_estimate_poses[:, 2], s=1, c='purple', label="Initial estimate")
 
     ax.legend(loc="upper right")
-    ax.set_xlim(-200, 350)
-    ax.set_ylim(-100, 500)
+    ax.set_xlim(-350, 350)
+    ax.set_ylim(-200, 500)
 
     # ax.set_xlim(-5, 5)
     # ax.set_ylim(-5, 50)
