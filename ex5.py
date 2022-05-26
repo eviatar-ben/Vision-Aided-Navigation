@@ -306,9 +306,14 @@ def bundle_adjustment(db):
     gtsam_cameras_rel_to_world = utilities.gtsam_left_cameras_relative_trans(gtsam_cameras_rel_to_bundle)
     landmarks_rel_to_world = utilities.compute_landmarks_in_relate_first_movie_camera(gtsam_cameras_rel_to_world,
                                                                                       all_landmarks_rel_to_bundle)
+    # ground truth:
     ground_truth_keyframes = [i[0] for i in utilities.fives]
     ground_truth = np.array(utilities.get_ground_truth_transformations())[ground_truth_keyframes]
     cameras_gt_3d = utilities.left_cameras_trajectory(ground_truth)
+
+    # initial estimation:
+    initial_estimate_poses = utilities.get_initial_estimation_trajectory()
+
     # plot:
     cameras_3d = utilities.gtsam_left_cameras_trajectory(gtsam_cameras_rel_to_world)
     exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
