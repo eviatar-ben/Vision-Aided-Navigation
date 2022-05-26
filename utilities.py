@@ -227,15 +227,19 @@ def reverse_ext(ext):
     return np.hstack((rev_R, rev_t.reshape(3, 1)))
 
 
-def get_track_frames_with_features(db, track):
+def get_track_frames_with_features(db, track, track_frames_inside_the_bundle=None):
     """
     given database and track the function will return 2 arrays of the track's feature left and right
     (each "side" in different array)
     :param db:
     :param track:
+    :param track_frames_inside_the_bundle: if given - only feature inside the bundle keyframes
     :return:
     """
-    frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
+    if track_frames_inside_the_bundle:
+        frame_ids = [frame.frame_id for frame in track_frames_inside_the_bundle]
+    else:
+        frame_ids = [frame_id for frame_id in track.frames_by_ids.keys()]
     frames_l_xy = []
     frames_r_xy = []
 
@@ -260,6 +264,14 @@ def compose_transformations(first_ex_mat, second_ex_mat):
     #             [000 | 1 ]
     hom1 = np.append(first_ex_mat, [np.array([0, 0, 0, 1])], axis=0)
     return second_ex_mat @ hom1
+
+
+def compose(trans1, trans2):
+    # R2R1 * v + R2t1 + t2.
+    r2r1 = trans2[:, :-1] @ (trans1[:, :-1])
+    r2t1_t2 = (trans2[:, :-1]) @ (trans1[:, -1]) + trans2[:, -1]
+    ext_r1 = np.column_stack((r2r1, r2t1_t2))
+    return ext_r1
 
 
 def compute_square_dist(pts_lst1, pts_lst2, dim="3d"):
@@ -376,6 +388,14 @@ def left_cameras_trajectory(relative_T_arr):
 # 150 155
 # 2845 2850
 # 3195 3200
+# def get_fives():
+#     last_tup = (0, 0)
+#     for i, cur_tup in enumerate(fives):
+#         assert cur_tup[0] == last_tup[1]
+#         last_tup = cur_tup
+#     return fives
+
+
 fives = [(0, 5), (5, 10), (10, 15), (15, 20), (20, 25), (25, 30), (30, 35), (35, 40), (40, 45), (45, 50), (50, 55),
          (55, 60), (60, 65), (65, 70), (70, 75), (75, 80), (80, 85), (85, 90), (90, 95), (95, 100), (100, 105),
          (105, 110), (110, 115), (115, 120), (120, 125), (125, 130), (130, 135), (135, 140),

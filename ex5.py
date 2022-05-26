@@ -144,15 +144,14 @@ def triangulate_from_last_frame_and_project_to_all_frames(db, track):
 # ----------------------------------------------------5.2---------------------------------------------------------------
 
 def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_frame_to_triangulate_from,
-                      gtsam_calib_mat,
-                      initial_estimate, landmark_symbols):
+                      gtsam_calib_mat, initial_estimate, landmark_symbols):
     track_frames_inside_the_bundle = [frame for frame in track.frames_by_ids.values()
                                       if first_frame_ind <= frame.frame_id <= last_frame_ind]
     # Track's locations in frames_in_window
-    left_locations, right_locations = utilities.get_track_frames_with_features(db, track)
-    # left_locations = track.get_left_locations_in_specific_frames(first_frame_ind, last_frame_ind)
-    # right_locations = track.get_right_locations_in_specific_frames(first_frame_ind, last_frame_ind)
+    left_locations, right_locations = utilities.get_track_frames_with_features(db, track,
+                                                                               track_frames_inside_the_bundle)
 
+    assert len(left_locations) == len(track_frames_inside_the_bundle)
     # Track's location at the Last frame for triangulations
     last_left_img_loc = left_locations[-1]
     last_right_img_loc = right_locations[-1]
@@ -191,9 +190,9 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
     k = get_gtsam_k_matrix()
     cameras_symbols, landmark_symbols = set(), set()
 
-    # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
-    pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
-        np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
+    pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
+    # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
+    #     np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
 
     frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 + 1)]
     first_frame = frames_in_bundle[0]
@@ -223,7 +222,7 @@ def adjust_bundle(db, keyframe1, keyframe2, computed_tracks=None):
     # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
-    #todo : pu kavor hacelev!!!!!!!!!!!!!!!!!1
+    # todo : pu kavor hacelev!!!!!!!!!!!!!!!!!1
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
     #                    db.tracks[track_id].get_last_frame_id() > keyframe2]
     for track in tracks_in_frame:
@@ -288,7 +287,7 @@ def adjust_all_bundles(db, keyframes):
     landmarks = []
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
         try:
-            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks)
+            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2, computed_tracks=[])
 
             cameras.append(bundle_data.get_optimized_cameras_p3d())
             landmarks.append(bundle_data.get_optimized_landmarks_p3d())
@@ -343,9 +342,8 @@ def main():
     #                                  i + 5 <= 3449])
 
     bundle_adjustment(db)
-
-    # adjust_bundle(db, 150, 160)
-    print("finished")
+    # adjust_bundle(db, 150, 155)
+    print("Finished successfully")
 
 
 if __name__ == '__main__':
