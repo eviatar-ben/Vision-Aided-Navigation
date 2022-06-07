@@ -220,8 +220,8 @@ def adjust_bundle(db, keyframe1, keyframe2):
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     # todo : pu kavor hacelev!!!!!!!!!!!!!!!!!1
-    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-    #                    db.tracks[track_id].get_last_frame_id() < keyframe2]
+    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
+                       db.tracks[track_id].get_last_frame_id() >= keyframe2]
     for track in tracks_in_frame:
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
         # todo : can go out from the loop
@@ -311,7 +311,6 @@ def bundle_adjustment(db):
                                                                                  initial_estimate_cameras_poses)
 
 
-
 def main():
     db = ex4.build_data()
     # 5.1
@@ -335,7 +334,7 @@ def main():
 
     # 5.3
     bundle_adjustment(db)
-    # adjust_bundle(db, 150, 155)
+    # adjust_bundle(db, 149, 155)
 
     print("Finished successfully")
 
