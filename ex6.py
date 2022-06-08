@@ -29,7 +29,6 @@ def get_first_bundle_info(db):
     print("Relative covariance between the frame poses:\n", cond_cov_mat, "\n")
     print("Relative poses of last key frames:\n", relative_pose)
 
-
 # ----------------------------------------------------6.2---------------------------------------------------------------
 
 
@@ -39,7 +38,7 @@ def main():
     # get_first_bundle_info(db)
     # 6.2:
     bundles = utilities.get_bundles()
-    _, _, bundles = adjust_all_bundles(db, utilities.fives)
+    # _, _, bundles = adjust_all_bundles(db, utilities.fives)
     pose_graph = PoseGraph(utilities.fives, bundles)
 
 

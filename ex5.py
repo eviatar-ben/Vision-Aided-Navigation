@@ -150,6 +150,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     # Track's locations in frames_in_window
     left_locations, right_locations = utilities.get_track_frames_with_features(db, track,
                                                                                track_frames_inside_the_bundle)
+
     assert len(left_locations) == len(track_frames_inside_the_bundle)
     # Track's location at the Last frame for triangulations
     last_left_img_loc = left_locations[-1]
@@ -161,6 +162,13 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
 
     # Triangulation from last frame
     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
+    # handle ill posed by filtering 3D points with high z value ( very far keyframes)
+    if gtsam_p3d[2] <= 0 or gtsam_p3d[2] >= 70:
+        if first_frame_ind == 835:
+            print(gtsam_p3d[2])
+        return
+
+    # print(gtsam_p3d[2])
 
     # Add landmark symbol to "values" dictionary
     p3d_sym = symbol('q', track.track_id)
@@ -182,6 +190,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
 
 
 def adjust_bundle(db, keyframe1, keyframe2):
+    # print(f"======================{keyframe1, keyframe2}==============================")
     graph = gtsam.NonlinearFactorGraph()
     initial_estimate = gtsam.Values()
     k = get_gtsam_k_matrix()
@@ -220,8 +229,9 @@ def adjust_bundle(db, keyframe1, keyframe2):
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     # todo : pu kavor hacelev!!!!!!!!!!!!!!!!!1
-    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-                       db.tracks[track_id].get_last_frame_id() >= keyframe2]
+    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
+    #                    db.tracks[track_id].get_last_frame_id() >= keyframe2]
+    # print(len(tracks_in_frame))
     for track in tracks_in_frame:
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
         # todo : can go out from the loop
@@ -338,10 +348,12 @@ def main():
     # # ----Factor Error Diffs:----:
     # utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
-    # 5.3
-    bundle_adjustment(db)
-    # adjust_bundle(db, 149, 155)
+    # 5.3    adjust_bundle(db, 149, 155)
 
+    # bundle_adjustment(db)
+    adjust_bundle(db, 149, 155)
+    # adjust_bundle(db, 152, 160)
+    # adjust_bundle(db, 685, 690)
     print("Finished successfully")
 
 

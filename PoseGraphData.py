@@ -4,7 +4,7 @@ import numpy as np
 
 
 class PoseGraph:
-    def __init__(self, key_frames, bundles ):
+    def __init__(self, key_frames, bundles):
         cov, rel_poses = PoseGraph.get_all_relative_covariance_and_poses(bundles)
 
         self.global_pose = []
@@ -23,7 +23,7 @@ class PoseGraph:
         :return: Relative pose and covariance matrix
         """
         # Compute bundle marginals
-        first_key_frame, second_key_frame = bundle.keyframe1,  bundle.keyframe2
+        first_key_frame, second_key_frame = bundle.keyframe1, bundle.keyframe2
         marginals = bundle.get_marginals()
 
         # Apply marginalization and conditioning to compute the covariance of the last key frame pose
