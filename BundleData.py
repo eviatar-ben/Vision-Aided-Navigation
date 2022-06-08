@@ -1,4 +1,6 @@
 import numpy as np
+import gtsam
+import pickle
 
 
 class BundleData:
@@ -12,12 +14,12 @@ class BundleData:
         self.factor_graph = factor_graph
         self.initial_values = initial_values
         self.optimized_values = optimized_values
+        self.marginals = None
 
     def set_optimized_values(self, optimized_values):
         self.optimized_values = optimized_values
 
     def get_optimized_cameras_p3d(self):
-        import gtsam
         from gtsam import symbol
         cam_pose = self.optimized_values.atPose3(symbol('c', self.keyframe2))
         return cam_pose
@@ -46,3 +48,6 @@ class BundleData:
 
         return np.asarray(landmarks)
 
+    def get_marginals(self):
+        self.marginals = gtsam.Marginals(self.factor_graph, self.optimized_values)
+        return self.marginals

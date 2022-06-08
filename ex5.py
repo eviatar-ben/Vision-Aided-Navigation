@@ -229,6 +229,7 @@ def adjust_bundle(db, keyframe1, keyframe2):
         add_track_factors(db, graph, track, keyframe1, keyframe2, gtsam_last_cam, k, initial_estimate,
                           landmark_symbols)  # Todo: as before
 
+    # Optimization:
     optimized_estimation = optimize_graph(graph, initial_estimate)
     bundle_data = BundleData(keyframe1, keyframe2, cameras_symbols, landmark_symbols, graph, initial_estimate)
 
@@ -269,23 +270,27 @@ def accum_scene(values, global_trans=None, plot=False):
 
 def adjust_all_bundles(db, keyframes):
     import tqdm
+    import pickle
     cameras = [gtsam.Pose3()]
     landmarks = []
+    bundles = []
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
         try:
             _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
-
+            bundles.append(bundle_data)
             cameras.append(bundle_data.get_optimized_cameras_p3d())
             landmarks.append(bundle_data.get_optimized_landmarks_p3d())
         except:
             print(f"problem with bundle: {keyframe1, keyframe2}")
-
-    return np.array(cameras), landmarks
+    pickle_out = open(r"pickled_bundles/bundles.pickle", "wb")
+    pickle.dump(bundles, pickle_out)
+    pickle_out.close()
+    return np.array(cameras), landmarks, bundles
 
 
 def bundle_adjustment(db):
     # bundle_adjustment:
-    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle = adjust_all_bundles(db, utilities.fives)
+    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, utilities.fives)
 
     # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle , _= adjust_all_bundles(db, [(0, 5), (5, 10)])
 
@@ -309,6 +314,7 @@ def bundle_adjustment(db):
                                                                                  cameras_gt=cameras_gt_3d,
                                                                                  initial_estimate_poses=
                                                                                  initial_estimate_cameras_poses)
+    return bundles
 
 
 def main():
