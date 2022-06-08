@@ -305,7 +305,7 @@ def bundle_adjustment(db):
     # plot:
     cameras_3d = utilities.gtsam_left_cameras_trajectory(gtsam_cameras_rel_to_world)
     exs_plots.plot_left_cam_2d_trajectory_and_3d_points_compared_to_ground_truth(cameras=cameras_3d,
-                                                                                 landmarks=landmarks_rel_to_world,
+                                                                                 landmarks=None,
                                                                                  cameras_gt=cameras_gt_3d,
                                                                                  initial_estimate_poses=
                                                                                  initial_estimate_cameras_poses)
