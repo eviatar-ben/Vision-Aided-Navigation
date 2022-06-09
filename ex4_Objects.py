@@ -97,6 +97,10 @@ class Track:
         max_id = max(self.frames_by_ids)
         return max_id
 
+    def get_first_frame_id(self):
+        max_id = min(self.frames_by_ids)
+        return max_id
+
     def __len__(self):
         return len(self.frames_by_ids)
 

@@ -281,7 +281,8 @@ def play(stop, pickling=True):
 
             tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p, inliers_per, Rt])
 
-        pickle_out = open(r"ex4_pickles\tracks_data.pickle", "wb")
+        # pickle_out = open(r"ex4_pickles\tracks_data.pickle", "wb")
+        pickle_out = open(r"ex4_pickles/tracks_data.pickle", "wb")
         pickle.dump(tracks_data_with_points, pickle_out)
         pickle_out.close()
 
