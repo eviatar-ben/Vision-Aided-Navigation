@@ -163,9 +163,9 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     # Triangulation from last frame
     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
     # handle ill posed by filtering 3D points with high z value ( very far keyframes)
-    if gtsam_p3d[2] <= 0 or gtsam_p3d[2] >= 70:
-        if first_frame_ind == 835:
-            print(gtsam_p3d[2])
+    if gtsam_p3d[2] <= 0 or gtsam_p3d[2] >= 300:
+        # if first_frame_ind == 835:
+        #     print(gtsam_p3d[2])
         return
 
     # print(gtsam_p3d[2])
@@ -206,20 +206,22 @@ def adjust_bundle(db, keyframe1, keyframe2):
     cur_cam_pose = None
     for frame_id, frame in zip(range(keyframe1, keyframe2 + 1), frames_in_bundle):
 
-        assert frame_id == frame.frame_id
         left_pose_symbol = symbol("c", frame.frame_id)
         cameras_symbols.add(left_pose_symbol)
-        # first frame
-        if frame_id == keyframe1:
-            first_pose = gtsam.Pose3()
-            graph.add(gtsam.PriorFactorPose3(left_pose_symbol, first_pose, pose_uncertainty))
 
         # Compute transformation of : Rt(world - > cur cam) *Rt(first cam -> world) = Rt(first cam -> cur cam)
         camera_relate_to_first_frame_trans = utilities.compose_transformations(first_frame_cam_to_world_ex_mat,
                                                                                frame.global_extrinsic_mat)
         # Convert this transformation to: cur cam -> first cam
         cur_cam_pose = utilities.reverse_ext(camera_relate_to_first_frame_trans)
-        initial_estimate.insert(left_pose_symbol, gtsam.Pose3(cur_cam_pose))
+        g_cur_cam_pose = gtsam.Pose3(cur_cam_pose)
+
+        # first frame
+        if frame.frame_id == keyframe1:
+            g_cur_cam_pose = gtsam.Pose3()
+            graph.add(gtsam.PriorFactorPose3(left_pose_symbol, g_cur_cam_pose, pose_uncertainty))
+
+        initial_estimate.insert(left_pose_symbol, g_cur_cam_pose)
 
     gtsam_last_left_cam_pose = gtsam.Pose3(cur_cam_pose)
 
@@ -228,7 +230,6 @@ def adjust_bundle(db, keyframe1, keyframe2):
     # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
-    # todo : pu kavor hacelev!!!!!!!!!!!!!!!!!1
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
     #                    db.tracks[track_id].get_last_frame_id() >= keyframe2]
     # print(len(tracks_in_frame))
@@ -285,13 +286,13 @@ def adjust_all_bundles(db, keyframes):
     landmarks = []
     bundles = []
     for keyframe1, keyframe2 in tqdm.tqdm(keyframes):
-        try:
-            _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
-            bundles.append(bundle_data)
-            cameras.append(bundle_data.get_optimized_cameras_p3d())
-            landmarks.append(bundle_data.get_optimized_landmarks_p3d())
-        except:
-            print(f"problem with bundle: {keyframe1, keyframe2}")
+        # try:
+        _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
+        bundles.append(bundle_data)
+        cameras.append(bundle_data.get_optimized_cameras_p3d())
+        landmarks.append(bundle_data.get_optimized_landmarks_p3d())
+        # except:
+        #     print(f"problem with bundle: {keyframe1, keyframe2}")
     pickle_out = open(r"pickled_bundles/bundles.pickle", "wb")
     pickle.dump(bundles, pickle_out)
     pickle_out.close()
@@ -300,7 +301,7 @@ def adjust_all_bundles(db, keyframes):
 
 def bundle_adjustment(db):
     # bundle_adjustment:
-    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, utilities.fives)
+    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, utilities.tens)
 
     # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle , _= adjust_all_bundles(db, [(0, 5), (5, 10)])
 
@@ -329,6 +330,7 @@ def bundle_adjustment(db):
 
 def main():
     db = ex4.build_data()
+
     # 5.1
     # track = utilities.get_track_in_len(db, 20, False)
     # triangulate_from_last_frame_and_project_to_all_frames(db, track)
@@ -348,12 +350,11 @@ def main():
     # # ----Factor Error Diffs:----:
     # utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
-    # 5.3    adjust_bundle(db, 149, 155)
+    # 5.3
 
-    # bundle_adjustment(db)
-    adjust_bundle(db, 149, 155)
-    # adjust_bundle(db, 152, 160)
-    # adjust_bundle(db, 685, 690)
+    # adjust_bundle(db, 148, 150)
+    bundle_adjustment(db)
+
     print("Finished successfully")
 
 

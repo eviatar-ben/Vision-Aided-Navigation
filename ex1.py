@@ -145,7 +145,7 @@ def get_matches_by_significance_test(kp1, d1, kp2, d2, img1, img2):
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ex3 utils:
-
+# todo: maybe the factor is the cause for low connectivity?
 def get_significance_matches(img1, img2, factor=0.35):
     def significance_test():
         result = {}

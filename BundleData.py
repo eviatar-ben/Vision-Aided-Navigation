@@ -51,3 +51,4 @@ class BundleData:
     def get_marginals(self):
         self.marginals = gtsam.Marginals(self.factor_graph, self.optimized_values)
         return self.marginals
+

@@ -146,7 +146,7 @@ def handle_general_extrinsic_matrices(db):
         last_general_extrinsic_mat = frame.global_extrinsic_mat
 
 
-def build_data(data_pickled_already=True):
+def build_data(data_pickled_already=True, pickled_cameras_pose=True):
     # todo: all the data is in one right shift. maybe to concatenate the identity Rt for the first frame
     tracks_data = get_tracks_data(data_pickled_already)
     db = DataBase()
@@ -181,7 +181,8 @@ def build_data(data_pickled_already=True):
     handle_last_frame_in_each_track(db)
     handle_general_extrinsic_matrices(db)
     db.set_inliers_per(inliers_pers)
-
+    if pickled_cameras_pose:
+        db.update_cameras()
     return db
 
 
