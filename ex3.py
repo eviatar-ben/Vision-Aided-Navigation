@@ -236,6 +236,7 @@ def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind
 
 
 def play(stop, pickling=True):
+
     import tqdm
     def compute_rts():
         for i in tqdm.tqdm(range(0, stop - 1)):
