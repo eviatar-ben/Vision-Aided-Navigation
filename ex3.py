@@ -236,10 +236,9 @@ def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind
 
 
 def play(stop, pickling=True):
+    import tqdm
     def compute_rts():
-        for i in range(0, stop - 1):
-            if i in [i for i in range(1, 3450, 50)]:
-                print(i)
+        for i in tqdm.tqdm(range(0, stop - 1)):
             Rt, first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per = one_shot(i)
             rts_path.append(Rt)
             tracks_data.append([first_frame_kp, second_frame_kp, supporters_matches01p, inliers_per, Rt])
@@ -286,6 +285,10 @@ def play(stop, pickling=True):
         pickle_out = open(r"ex4_pickles/tracks_data.pickle", "wb")
         pickle.dump(tracks_data_with_points, pickle_out)
         pickle_out.close()
+
+        pickle_out_transformations = open(r"ex4_pickles\global_transformations.pickle", "wb")
+        pickle.dump(positions, pickle_out_transformations)
+        pickle_out_transformations.close()
     return np.array(positions), tracks_data
 
 
