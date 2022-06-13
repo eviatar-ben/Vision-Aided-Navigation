@@ -198,7 +198,7 @@ def adjust_bundle(db, keyframe1, keyframe2):
 
     # pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas([1e-3] * 3 + [1e-2] * 3)  # todo: nothing here is clear
     pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
-        np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))  # todo: check maor's covariances
+        np.array([(3 * np.pi / 180) ** 2] * 3 + [0.01, 0.001, 0.01]))  # todo: check maor's covariances
 
     frames_in_bundle = [db.frames[frame_id] for frame_id in range(keyframe1, keyframe2 + 1)]
     first_frame = frames_in_bundle[0]

@@ -66,7 +66,7 @@ class PoseGraph:
         self.global_pose.append(gtsam_cur_global_pose)
 
         pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
-            np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))
+            np.array([(3 * np.pi / 180) ** 2] * 3 + [0.01, 0.001, 0.01]))
         factor = gtsam.PriorFactorPose3(first_left_cam_sym, gtsam_cur_global_pose, pose_uncertainty)
         self.graph.add(factor)
 
@@ -75,21 +75,20 @@ class PoseGraph:
         prev_sym = first_left_cam_sym
 
         # Create factor for each pose and add it to the graph
-        for i in range(1, len(self.rel_poses)):
-            cur_sym = symbol('c', self.key_frames[i][0])
+        for i in range(len(self.rel_poses) - 1):
+            cur_sym = symbol('c', self.key_frames[i + 1][0])
             gtsam_cur_global_pose = gtsam_cur_global_pose.compose(self.rel_poses[i])
             self.global_pose.append(gtsam_cur_global_pose)
 
             # Create factor
-            noise_model = gtsam.noiseModel.Gaussian.Covariance(self.cov[i - 1])
+            noise_model = gtsam.noiseModel.Gaussian.Covariance(self.cov[i])
             factor = gtsam.BetweenFactorPose3(prev_sym, cur_sym, self.rel_poses[i], noise_model)
             self.graph.add(factor)
 
             # Add initial estimate
-            self.initial_estimate.insert(cur_sym,  gtsam_cur_global_pose)
+            self.initial_estimate.insert(cur_sym, gtsam_cur_global_pose)
 
             prev_sym = cur_sym
-
 
     def optimize(self):
         self.optimizer = gtsam.LevenbergMarquardtOptimizer(self.graph, self.initial_estimate)
@@ -100,3 +99,6 @@ class PoseGraph:
 
     def get_initial_graph_error(self):
         return self.graph.error(self.initial_estimate)
+
+    def get_marginals(self):
+        return gtsam.Marginals(self.graph, self.optimized_values)

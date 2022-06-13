@@ -8,11 +8,12 @@ from PoseGraphData import PoseGraph
 
 # ----------------------------------------------------6.1---------------------------------------------------------------
 def get_first_bundle_info(db):
-    keyframe1, keyframe2 = 0, 7
+    keyframe1, keyframe2 = 0, 6
     _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
     marginals = bundle_data.get_marginals()
     optimized_values = bundle_data.optimized_values
     plot.plot_trajectory(1, optimized_values, marginals=marginals, scale=1, title="Pose's Covariance")
+    plt.savefig(r'./plots/ex6/first_bundle_poses.png')
     plt.show()
 
     # Covariance (marginalization and conditioning):
@@ -39,10 +40,34 @@ def main():
     # 6.1:
     # get_first_bundle_info(db)
     # 6.2:
-    bundles = utilities.get_bundles()
-    # _, _, bundles = adjust_all_bundles(db, utilities.perfect_fives)
+    # bundles = utilities.get_bundles()
+    _, _, bundles = adjust_all_bundles(db, utilities.perfect_fives)
     pose_graph = PoseGraph(utilities.perfect_fives, bundles)
     pose_graph.optimize()
+    initial_estimate_poses = pose_graph.initial_estimate
+    optimized_poses = pose_graph.optimized_values
+    # plot initial estimations:
+    # Plot initial estimate trajectory
+    gtsam.utils.plot.plot_trajectory(1, initial_estimate_poses, title="Initial estimate trajectory", project_2d=True)
+    plt.tight_layout()
+    plt.savefig(r'./plots/ex6/initial_estimation_trajectory.png')
+    plt.show()
+    # Plot optimized trajectory
+    gtsam.utils.plot.plot_trajectory(2, optimized_poses, title="optimized trajectory", project_2d=True)
+    plt.tight_layout()
+    plt.savefig(r'./plots/ex6/optimized_trajectory.png')
+    plt.show()
+    # Optimized trajectory with covariance
+    marginals = pose_graph.get_marginals()
+    plot.plot_trajectory(3, optimized_poses, marginals=marginals,
+                         title="Optimized poses with covariance", project_2d=True)
+    plt.tight_layout()
+    plt.savefig(r'./plots/ex6/optimized_trajectory.png')
+    plt.show()
+
+    # Graph error before and after optimization
+    print("Initial graph error: ", pose_graph.get_initial_graph_error())
+    print("optimized graph error: ", pose_graph.get_optimized_graph_error())
 
 
 if __name__ == '__main__':
