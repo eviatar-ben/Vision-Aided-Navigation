@@ -15,6 +15,7 @@ class PoseGraph:
         self.initial_estimate = gtsam.Values()
         self.optimized_values = None
         self.graph = gtsam.NonlinearFactorGraph()
+        self.build_factor_graph()
 
     @staticmethod
     def get_bundle_relative_covariance_and_poses(bundle):
@@ -55,4 +56,47 @@ class PoseGraph:
             cov_mat_lst.append(cond_cov_mat)
             rel_poses_lst.append(relative_pose)
 
-        return rel_poses_lst, cov_mat_lst
+        return cov_mat_lst, rel_poses_lst
+
+    def build_factor_graph(self):
+        # Create first camera symbol
+        gtsam_cur_global_pose = gtsam.Pose3()
+        first_left_cam_sym = symbol('c', self.key_frames[0][0])
+
+        self.global_pose.append(gtsam_cur_global_pose)
+
+        pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
+            np.array([(3 * np.pi / 180) ** 2] * 3 + [1.0, 0.3, 1.0]))
+        factor = gtsam.PriorFactorPose3(first_left_cam_sym, gtsam_cur_global_pose, pose_uncertainty)
+        self.graph.add(factor)
+
+        self.initial_estimate.insert(first_left_cam_sym, gtsam_cur_global_pose)
+
+        prev_sym = first_left_cam_sym
+
+        # Create factor for each pose and add it to the graph
+        for i in range(1, len(self.rel_poses)):
+            cur_sym = symbol('c', self.key_frames[i][0])
+            gtsam_cur_global_pose = gtsam_cur_global_pose.compose(self.rel_poses[i])
+            self.global_pose.append(gtsam_cur_global_pose)
+
+            # Create factor
+            noise_model = gtsam.noiseModel.Gaussian.Covariance(self.cov[i - 1])
+            factor = gtsam.BetweenFactorPose3(prev_sym, cur_sym, self.rel_poses[i], noise_model)
+            self.graph.add(factor)
+
+            # Add initial estimate
+            self.initial_estimate.insert(cur_sym,  gtsam_cur_global_pose)
+
+            prev_sym = cur_sym
+
+
+    def optimize(self):
+        self.optimizer = gtsam.LevenbergMarquardtOptimizer(self.graph, self.initial_estimate)
+        self.optimized_values = self.optimizer.optimize()
+
+    def get_optimized_graph_error(self):
+        return self.graph.error(self.optimized_values)
+
+    def get_initial_graph_error(self):
+        return self.graph.error(self.initial_estimate)
