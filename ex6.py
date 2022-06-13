@@ -37,8 +37,8 @@ def main():
     # 6.1:
     # get_first_bundle_info(db)
     # 6.2:
-    bundles = utilities.get_bundles()
-    # _, _, bundles = adjust_all_bundles(db, utilities.fives)
+    # bundles = utilities.get_bundles()
+    _, _, bundles = adjust_all_bundles(db, utilities.perfect_fives)
     pose_graph = PoseGraph(utilities.fives, bundles)
 
 

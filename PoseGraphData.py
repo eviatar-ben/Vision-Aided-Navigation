@@ -49,7 +49,6 @@ class PoseGraph:
         import tqdm
         rel_poses_lst, cov_mat_lst = [], []
 
-        print("Compute relative poses and covariance for each bundle")
         for i in tqdm.tqdm(range(len(bundles))):
             relative_pose, cond_cov_mat = PoseGraph.get_bundle_relative_covariance_and_poses(bundles[i])
 
