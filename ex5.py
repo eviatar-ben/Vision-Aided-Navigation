@@ -229,6 +229,7 @@ def adjust_bundle(db, keyframe1, keyframe2):
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
     # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
+    tracks_ids_in_frame = db.get_tracks_ids_in_frames(keyframe1, keyframe2)
     # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
     tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
                        db.tracks[track_id].get_last_frame_id() >= keyframe2]
