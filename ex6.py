@@ -38,28 +38,28 @@ def get_first_bundle_info(db):
 def main():
     db = ex4.build_data()
     # 6.1:
-    # get_first_bundle_info(db)
+    get_first_bundle_info(db)
     # 6.2:
     # bundles = utilities.get_bundles()
-    _, _, bundles = adjust_all_bundles(db, utilities.perfect_fives)
+    _, _, bundles = adjust_all_bundles(db, utilities.b_keys)
     pose_graph = PoseGraph(utilities.perfect_fives, bundles)
     pose_graph.optimize()
     initial_estimate_poses = pose_graph.initial_estimate
     optimized_poses = pose_graph.optimized_values
     # plot initial estimations:
     # Plot initial estimate trajectory
-    gtsam.utils.plot.plot_trajectory(1, initial_estimate_poses, title="Initial estimate trajectory", project_2d=True)
+    gtsam.utils.plot.plot_trajectory(0, initial_estimate_poses, title="Initial estimate trajectory", project_2d=True)
     plt.tight_layout()
     plt.savefig(r'./plots/ex6/initial_estimation_trajectory.png')
     plt.show()
     # Plot optimized trajectory
-    gtsam.utils.plot.plot_trajectory(2, optimized_poses, title="optimized trajectory", project_2d=True)
+    gtsam.utils.plot.plot_trajectory(1, optimized_poses, title="optimized trajectory", project_2d=True)
     plt.tight_layout()
     plt.savefig(r'./plots/ex6/optimized_trajectory.png')
     plt.show()
     # Optimized trajectory with covariance
     marginals = pose_graph.get_marginals()
-    plot.plot_trajectory(3, optimized_poses, marginals=marginals,
+    plot.plot_trajectory(2, optimized_poses, marginals=marginals,
                          title="Optimized poses with covariance", project_2d=True)
     plt.tight_layout()
     plt.savefig(r'./plots/ex6/optimized_trajectory.png')

@@ -163,7 +163,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     # Triangulation from last frame
     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
     # handle ill posed by filtering 3D points with high z value ( very far keyframes)
-    if gtsam_p3d[2] <= 0 or gtsam_p3d[2] >= 150:
+    if gtsam_p3d[2] <= 0 or gtsam_p3d[2] >= 100:
         # if first_frame_ind == 835:
         #     print(gtsam_p3d[2])
         return
@@ -331,24 +331,24 @@ def bundle_adjustment(db):
 def main():
     db = ex4.build_data()
 
-    # 5.1
-    track = utilities.get_track_in_len(db, 20, False)
-    triangulate_from_last_frame_and_project_to_all_frames(db, track)
-    keyframe1, keyframe2 = 0, 10
-    graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
-    factor_error_before_optimization = np.log(graph.error(initial_estimate))  # log-likelihood
-    # ----3D Trajectory----:
-    plot_trajectory(fignum=0, values=initial_estimate)
-    # set_axes_equal(0)
-    plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
-    factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
-    # ----2D Trajectory----:
-    exs_plots.plot_left_cam_2d_trajectory(bundle_data)
-    accum_scene(bundle_data.optimized_values, plot=True)
-    plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
-    # 5.2
-    # ----Factor Error Diffs:----:
-    utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
+    # # 5.1
+    # track = utilities.get_track_in_len(db, 20, False)
+    # triangulate_from_last_frame_and_project_to_all_frames(db, track)
+    # keyframe1, keyframe2 = 0, 10
+    # graph, initial_estimate, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
+    # factor_error_before_optimization = np.log(graph.error(initial_estimate))  # log-likelihood
+    # # ----3D Trajectory----:
+    # plot_trajectory(fignum=0, values=initial_estimate)
+    # # set_axes_equal(0)
+    # plt.savefig(fr"plots/ex5/Trajectory3D/Trajectory3D({keyframe1, keyframe2}).png")
+    # factor_error_after_optimization = np.log(graph.error(bundle_data.optimized_values))  # log-likelihood
+    # # ----2D Trajectory----:
+    # exs_plots.plot_left_cam_2d_trajectory(bundle_data)
+    # accum_scene(bundle_data.optimized_values, plot=True)
+    # plt.savefig(fr"plots/ex5/Trajectory2D/Trajectory2D({keyframe1, keyframe2}).png")
+    # # 5.2
+    # # ----Factor Error Diffs:----:
+    # utilities.present_factor_error_differences(factor_error_after_optimization, factor_error_before_optimization)
 
     # 5.3
 

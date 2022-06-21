@@ -194,17 +194,17 @@ def main():
     db = build_data()
     # 4.2
     db.present_statistics()
-    # 4.3
-    track = utilities.get_track_in_len(db, 3, False)
-    exs_plots.display_track(db, track, crop=False)
-    # 4.4
-    exs_plots.connectivity_graph(db.frames.values())
-    # 4.5
-    exs_plots.present_inliers_per_frame_percentage(db.frames.values())
-    # 4.6
-    exs_plots.present_track_len_histogram(db.tracks)
-    # 4.7
-    exs_plots.present_reprojection_error(db, track)
+    # # 4.3
+    # track = utilities.get_track_in_len(db, 3, False)
+    # exs_plots.display_track(db, track, crop=False)
+    # # 4.4
+    # exs_plots.connectivity_graph(db.frames.values())
+    # # 4.5
+    # exs_plots.present_inliers_per_frame_percentage(db.frames.values())
+    # # 4.6
+    # exs_plots.present_track_len_histogram(db.tracks)
+    # # 4.7
+    # exs_plots.present_reprojection_error(db, track)
 
 
 if __name__ == '__main__':
