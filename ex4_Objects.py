@@ -34,6 +34,13 @@ class DataBase:
         frame = self.frames[frame_id]
         return frame.tracks_to_features.keys()
 
+    def get_tracks_ids_in_frames(self, first_frame_id, second_frame_id):
+        result = set()
+        for frame_id in range(first_frame_id, second_frame_id+1):
+            frame = self.frames[frame_id]
+            result |= set(frame.tracks_to_features.keys())
+        return result
+
     def get_frames_in_tracks(self, track_id):
         """"a function that returns all the FrameIds that are part of a given TrackId."""
         track = self.tracks[track_id]

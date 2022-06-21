@@ -164,7 +164,7 @@ def add_track_factors(db, graph, track, first_frame_ind, last_frame_ind, gtsam_f
     gtsam_p3d = gtsam_frame_to_triangulate_from.backproject(gtsam_stereo_point2_for_triangulation)
     # handle ill posed by filtering 3D points with high z value ( very far keyframes)
     if gtsam_p3d[2] <= 0 or gtsam_p3d[2] >= 100:
-        # if first_frame_ind == 835:
+        # if first_frame_ind ==![](plots/ex5/FullTrajectory2D/FullTrajectory2D.png) 835:
         #     print(gtsam_p3d[2])
         return
 
@@ -229,10 +229,13 @@ def adjust_bundle(db, keyframe1, keyframe2):
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
     # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
     tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
-    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
-    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-                       db.tracks[track_id].get_last_frame_id() >= keyframe2]
+    # tracks_ids_in_frame = db.get_tracks_ids_in_frames(keyframe1, keyframe2)
+
+    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
+    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
+    #                    db.tracks[track_id].get_last_frame_id() >= keyframe2 and len(db.tracks[track_id]) > 2]
     # print(len(tracks_in_frame))
+
     for track in tracks_in_frame:
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
         # todo : can go out from the loop
@@ -300,8 +303,9 @@ def adjust_all_bundles(db, keyframes):
 
 
 def bundle_adjustment(db):
+    key_frames = utilities.perfect_fives
     # bundle_adjustment:
-    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, utilities.perfect_fives)
+    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, key_frames)
 
     # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle , _= adjust_all_bundles(db, [(0, 5), (5, 10)])
 
@@ -310,7 +314,7 @@ def bundle_adjustment(db):
     landmarks_rel_to_world = utilities.compute_landmarks_in_relate_first_movie_camera(gtsam_cameras_rel_to_world,
                                                                                       all_landmarks_rel_to_bundle)
     # ground truth:
-    ground_truth_keyframes = [i[0] for i in utilities.fives]
+    ground_truth_keyframes = [i[0] for i in key_frames]
     ground_truth = np.array(utilities.get_ground_truth_transformations())[ground_truth_keyframes]
     cameras_gt_3d = utilities.left_cameras_trajectory(ground_truth)
 
@@ -352,7 +356,7 @@ def main():
 
     # 5.3
 
-    # adjust_bundle(db, 148, 152)
+    # adjust_bundle(db, 0, 12)
     bundle_adjustment(db)
 
     print("Finished successfully")

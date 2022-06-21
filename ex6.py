@@ -36,13 +36,15 @@ def get_first_bundle_info(db):
 
 
 def main():
+    key_frames = utilities.perfect_fives
+
     db = ex4.build_data()
     # 6.1:
     get_first_bundle_info(db)
     # 6.2:
     # bundles = utilities.get_bundles()
-    _, _, bundles = adjust_all_bundles(db, utilities.b_keys)
-    pose_graph = PoseGraph(utilities.perfect_fives, bundles)
+    _, _, bundles = adjust_all_bundles(db, key_frames)
+    pose_graph = PoseGraph(key_frames, bundles)
     pose_graph.optimize()
     initial_estimate_poses = pose_graph.initial_estimate
     optimized_poses = pose_graph.optimized_values
