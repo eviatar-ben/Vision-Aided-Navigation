@@ -8,7 +8,7 @@ from PoseGraphData import PoseGraph
 
 # ----------------------------------------------------6.1---------------------------------------------------------------
 def get_first_bundle_info(db):
-    keyframe1, keyframe2 = 0, 6
+    keyframe1, keyframe2 = 0, 10
     _, _, bundle_data = adjust_bundle(db, keyframe1, keyframe2)
     marginals = bundle_data.get_marginals()
     optimized_values = bundle_data.optimized_values
@@ -41,7 +41,7 @@ def main():
     get_first_bundle_info(db)
     # 6.2:
     # bundles = utilities.get_bundles()
-    _, _, bundles = adjust_all_bundles(db, utilities.b_keys)
+    _, _, bundles = adjust_all_bundles(db, utilities.perfect_fives)
     pose_graph = PoseGraph(utilities.perfect_fives, bundles)
     pose_graph.optimize()
     initial_estimate_poses = pose_graph.initial_estimate

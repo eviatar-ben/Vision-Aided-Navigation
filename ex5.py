@@ -228,11 +228,11 @@ def adjust_bundle(db, keyframe1, keyframe2):
     # For each track create measurements factors
     # todo: check weather those are the desired tracks? shouldnt it be all tracks totally inside the bundle?
     # list(db.get_tracks_ids_in_frame(frames_in_bundle[1].frame_id))
-    tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
+    # tracks_ids_in_frame = db.get_tracks_ids_in_frame(first_frame.frame_id)
     tracks_ids_in_frame = db.get_tracks_ids_in_frames(keyframe1, keyframe2)
-    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame]
-    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
-                       db.tracks[track_id].get_last_frame_id() >= keyframe2]
+    tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame ]
+    # tracks_in_frame = [db.tracks[track_id] for track_id in tracks_ids_in_frame if
+    #                    db.tracks[track_id].get_last_frame_id() >= keyframe2]
     # print(len(tracks_in_frame))
     for track in tracks_in_frame:
         # Create a gtsam object for the last frame for making the projection at the function "add_factors"
@@ -302,7 +302,7 @@ def adjust_all_bundles(db, keyframes):
 
 def bundle_adjustment(db):
     # bundle_adjustment:
-    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, utilities.perfect_fives)
+    gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle, bundles = adjust_all_bundles(db, utilities.fives)
 
     # gtsam_cameras_rel_to_bundle, all_landmarks_rel_to_bundle , _= adjust_all_bundles(db, [(0, 5), (5, 10)])
 
