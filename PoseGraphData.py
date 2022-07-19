@@ -2,6 +2,7 @@ import gtsam
 from gtsam import symbol
 import numpy as np
 
+import ex7_Objects
 import utilities
 
 
@@ -18,6 +19,19 @@ class PoseGraph:
         self.optimized_values = None
         self.graph = gtsam.NonlinearFactorGraph()
         self.build_factor_graph()
+        # todo: change implementation
+        # todo: check weather the cov is the proper relative cov
+        self.kf_graph = ex7_Objects.VertexGraph(len(key_frames), rel_covs=cov)
+
+    # -----------------------------
+    def create_vertex_graph(self):
+        for i in range(len(self.cov)):
+            self.add_edge(i, i + 1, self.cov[i])
+
+    def add_edge(self, first_v, second_v, weight):
+        self.kf_graph[first_v][second_v] = weight
+
+    # -----------------------------
 
     @staticmethod
     def get_bundle_relative_covariance_and_poses(bundle):
@@ -113,6 +127,17 @@ class PoseGraph:
     def loop_closure(self, cur_kf):
         # mahalanobis_distance
         mahalanobis_similarity = self.mahalanobis_distance(cur_kf)
+        similar_kf_after_consensus_match = []
+
+        # if mahalanobis_similarity:
+        #     frame_ind = np.array(self.key_frames)[cur_kf]  # frame index of the keyframe index
+        #     similar_kf_after_consensus_match = find_loop_candidate_by_consensus_match(
+        #         mahalanobis_dist_cand_at_movie_ind,
+        #         mahalanobis_dist_cand_at_pg_ind,
+        #         cur_frame_movie_ind,
+        #         INLIERS_THRESHOLD_PERC)
+        # return similar_kf_after_consensus_match
+
 
     def mahalanobis_distance(self, cur_kf_ind):
         # mahalanobis_dist = lambda delta, cov : (delta.T @ np.linalg.inv(cov) @ delta)** 0.5
@@ -124,7 +149,7 @@ class PoseGraph:
         cur_kf_mat = self.initial_estimate.atPose3(symbol('c', cur_kf_ind))
         for prev_kf_ind in range(cur_kf_ind):
             # get shortest path:
-            shortest_path = get_shortest_path(prev_kf_ind, cur_kf_ind)
+            shortest_path = self.kf_graph.find_shortest_path(prev_kf_ind, cur_kf_ind)
             # get sum of relative covariance matrices between prev and cur kf:
             estimated_relative_cov = self.get_estimated_relative_cov(shortest_path)
 
@@ -145,4 +170,8 @@ class PoseGraph:
         return similar_kf
 
     def get_estimated_relative_cov(self, shortest_path):
-        pass
+        estimated_relative_cov = np.zeros((6, 6))
+        for i in range(1, len(shortest_path)):
+            edge = self.kf_graph.get_edge_between_vertices(shortest_path[i - 1], shortest_path[i])
+            estimated_relative_cov += edge.get_cov()
+        return estimated_relative_cov
