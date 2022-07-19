@@ -392,6 +392,32 @@ def get_initial_estimate_cameras_poses(frames):
     return np.array(poses)
 
 
+# -----------------------------------------------------5----------------------------------------------------------------
+def rot_mat_to_euler_angles(R_mat):
+    sy = np.sqrt(R_mat[0, 0] * R_mat[0, 0] + R_mat[1, 0] * R_mat[1, 0])
+    singular = sy < 1e-6
+    if not singular:
+        azimut = np.arctan2(R_mat[2, 1], R_mat[2, 2])
+        pitch = np.arctan2(-R_mat[2, 0], sy)
+        roll = np.arctan2(R_mat[1, 0], R_mat[0, 0])
+    else:
+        azimut = np.arctan2(-R_mat[1, 2], R_mat[1, 1])
+        pitch = np.arctan2(-R_mat[2, 0], sy)
+        roll = 0
+    return np.array([azimut, pitch, roll])
+
+
+def gtsam_translation_to_vec(R_mat, t_vec):
+    np_R_mat = np.hstack((R_mat.column(1).reshape(3, 1), R_mat.column(2).reshape(3, 1), R_mat.column(3).reshape(3, 1)))
+    euler_angles = rot_mat_to_euler_angles(np_R_mat)
+    return np.hstack((euler_angles, t_vec))
+
+
+def gtsam_cams_delta(first_cam_mat, second_cam_mat):
+    gtsam_rel_trans = second_cam_mat.between(first_cam_mat)
+    return gtsam_translation_to_vec(gtsam_rel_trans.rotation(), gtsam_rel_trans.translation())
+
+
 # problems with
 # 150 155
 # 2845 2850
@@ -607,8 +633,7 @@ maor_keys = [0, 12, 23, 36, 47, 58, 66, 73, 91, 103, 111, 118, 130, 144, 150, 15
              3181, 3184, 3187, 3190, 3193, 3196, 3199, 3202, 3206, 3213, 3216, 3220, 3229, 3236, 3248, 3258, 3264, 3271,
              3278, 3288, 3295, 3305, 3325, 3334, 3342, 3357, 3371, 3378, 3384, 3389, 3403, 3413, 3421, 3430, 3438, 3449]
 
-maor_tup_keys = [(maor_keys[i], maor_keys[i + 1]) for i in range(len(maor_keys)-1)]
-
+maor_tup_keys = [(maor_keys[i], maor_keys[i + 1]) for i in range(len(maor_keys) - 1)]
 
 
 def get_bundles():

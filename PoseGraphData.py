@@ -2,6 +2,8 @@ import gtsam
 from gtsam import symbol
 import numpy as np
 
+import utilities
+
 
 class PoseGraph:
     def __init__(self, key_frames, bundles):
@@ -102,3 +104,45 @@ class PoseGraph:
 
     def get_marginals(self):
         return gtsam.Marginals(self.graph, self.optimized_values)
+
+    def all_loop_closure(self):
+        import tqdm
+        for i in tqdm.tqdm(range(len(self.key_frames))):
+            self.loop_closure(i)
+
+    def loop_closure(self, cur_kf):
+        # mahalanobis_distance
+        mahalanobis_similarity = self.mahalanobis_distance(cur_kf)
+
+    def mahalanobis_distance(self, cur_kf_ind):
+        # mahalanobis_dist = lambda delta, cov : (delta.T @ np.linalg.inv(cov) @ delta)** 0.5
+        def mahalanobis_dist(delta, cov):
+            r_squared = delta.T @ np.linalg.inv(cov) @ delta
+            return r_squared ** 0.5
+
+        similar_kf = []
+        cur_kf_mat = self.initial_estimate.atPose3(symbol('c', cur_kf_ind))
+        for prev_kf_ind in range(cur_kf_ind):
+            # get shortest path:
+            shortest_path = get_shortest_path(prev_kf_ind, cur_kf_ind)
+            # get sum of relative covariance matrices between prev and cur kf:
+            estimated_relative_cov = self.get_estimated_relative_cov(shortest_path)
+
+            # get transformation between prev and cur kfs:
+            prev_kf_mat = self.initial_estimate.atPose3(symbol('c', prev_kf_ind))
+
+            cams_delta = utilities.gtsam_cams_delta(prev_kf_mat, cur_kf_mat)
+            # get mahalanobis distance
+            mahalanobis_dist = mahalanobis_dist(cams_delta, estimated_relative_cov)
+
+            # check for threshold:
+            if mahalanobis_dist < 100:
+                similar_kf.append([mahalanobis_dist, prev_kf_ind])
+        # sort, and take the 3 most similar
+        if len(similar_kf) > 0:
+            similar_kf.sort(key=lambda x: x[0])
+            similar_kf = np.array(similar_kf[:3]).astype(int)[:, 1]
+        return similar_kf
+
+    def get_estimated_relative_cov(self, shortest_path):
+        pass
