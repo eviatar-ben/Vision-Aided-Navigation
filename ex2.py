@@ -49,7 +49,7 @@ def present_key_points(img1, kp1, img2, kp2):
 
 
 def match(kp1, des1, kp2, des2, img1, img2):
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     matches = bf.match(des1, des2)
     sorted_matches = sorted(matches, key=lambda x: x.distance)
     img3 = cv2.drawMatches(img1, kp1, img2, kp2, sorted_matches[:50], img2, flags=2)
@@ -58,7 +58,7 @@ def match(kp1, des1, kp2, des2, img1, img2):
 
 
 def present_match(img3):
-    cv2.imshow('SIFT', img3)
+    cv2.imshow('AKAZE', img3)
     cv2.waitKey(0)
 
 
@@ -211,7 +211,7 @@ def rectify(matches, key_points1, key_points2):
 
 
 def get_matches_stereo(image1, image2):
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, akaze)
     matches = bf.match(descriptor1, descriptor2)
     idx_kp1 = rectify(matches, key_points1, key_points2)
@@ -227,7 +227,7 @@ def get_brute_force_matches(img1, img2):
         for i, j in zip(matches_i_in_img1, matches_i_in_img2):
             idx_kp1[i] = j
         return idx_kp1
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(img1, img2, akaze)
     matches = bf.match(descriptor1, descriptor2)
     idx_kp1 = rectify2(matches)
@@ -237,7 +237,7 @@ def get_brute_force_matches(img1, img2):
 if __name__ == '__main__':
     # In retrospect the following rows commented in order to change the API for further exercise
     # sift = cv2.SIFT_create()
-    # bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    # bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
     # _, m1c, m2c = get_camera_mat()
     #
     # image1, image2 = read_images(FIRST_IMAGE)

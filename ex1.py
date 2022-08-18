@@ -16,8 +16,8 @@ numpy.set_printoptions(threshold=sys.maxsize)
 # sift = cv2.SIFT_create()
 akaze = cv2.AKAZE_create()
 
-bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+bf_ncc = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
 
 
 def read_images(idx):
