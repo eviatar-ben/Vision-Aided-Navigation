@@ -6,14 +6,16 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-IMAGE_PATH = r'C:\Users\eviatar\Desktop\eviatar\Study\YearD\semester b\VAN\VAN_ex\docs'
-DATA_PATH = r'C:/Users/eviatar/Desktop/eviatar/Study/YearD/semester b/VAN/VAN_ex/dataset/sequences/00/'
+IMAGE_PATH = r'..\VAN_ex\docs'
+DATA_PATH = r'../dataset/sequences/00/'
 FIRST_IMAGE = 000000
 SECOND_IMAGE = 0o00001
-RATIO = 0.65  # equalibrium point
+RATIO = 0.75  # equalibrium point
 numpy.set_printoptions(threshold=sys.maxsize)
 
-sift = cv2.SIFT_create()
+# sift = cv2.SIFT_create()
+akaze = cv2.AKAZE_create()
+
 bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 bf_ncc = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
 
@@ -26,8 +28,8 @@ def read_images(idx):
 
 
 def detect_and_describe(img1, img2):
-    kp1, des1 = sift.detectAndCompute(img1, None)
-    kp2, des2 = sift.detectAndCompute(img2, None)
+    kp1, des1 = akaze.detectAndCompute(img1, None)
+    kp2, des2 = akaze.detectAndCompute(img2, None)
 
     return kp1, des1, kp2, des2, img1, img2
 

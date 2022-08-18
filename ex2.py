@@ -18,7 +18,9 @@ CYAN = (0, 255, 255)
 
 numpy.set_printoptions(threshold=sys.maxsize)
 
-sift = cv2.SIFT_create()
+# sift = cv2.SIFT_create()
+akaze = cv2.AKAZE_create()
+
 
 
 # ex1 utils:
@@ -182,7 +184,7 @@ def get_cloud(image):
     _, m1c, m2c, _, _ = get_camera_mat()
 
     image1, image2 = read_images(image)
-    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, sift)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, akaze)
     # present_key_points(image1, key_points1, image2, key_points2)
     image3, matches = match(key_points1, descriptor1, key_points2, descriptor2, image1, image2)
     # 2.2:
@@ -210,7 +212,7 @@ def rectify(matches, key_points1, key_points2):
 
 def get_matches_stereo(image1, image2):
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, sift)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(image1, image2, akaze)
     matches = bf.match(descriptor1, descriptor2)
     idx_kp1 = rectify(matches, key_points1, key_points2)
     return matches, idx_kp1, key_points1, key_points2
@@ -226,7 +228,7 @@ def get_brute_force_matches(img1, img2):
             idx_kp1[i] = j
         return idx_kp1
     bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(img1, img2, sift)
+    key_points1, descriptor1, key_points2, descriptor2, image1, image2 = detect_and_describe(img1, img2, akaze)
     matches = bf.match(descriptor1, descriptor2)
     idx_kp1 = rectify2(matches)
     return matches, idx_kp1, key_points1, key_points2

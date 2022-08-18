@@ -9,7 +9,6 @@ import utilities
 class PoseGraph:
     def __init__(self, key_frames, bundles):
         cov, rel_poses = PoseGraph.get_all_relative_covariance_and_poses(bundles)
-
         self.global_pose = []
         self.cov = cov
         self.rel_poses = rel_poses
@@ -19,19 +18,13 @@ class PoseGraph:
         self.optimized_values = None
         self.graph = gtsam.NonlinearFactorGraph()
         self.build_factor_graph()
-        # todo: change implementation
         # todo: check weather the cov is the proper relative cov
-        self.kf_graph = ex7_Objects.VertexGraph(len(key_frames), rel_covs=cov)
-
-    # -----------------------------
-    def create_vertex_graph(self):
-        for i in range(len(self.cov)):
-            self.add_edge(i, i + 1, self.cov[i])
-
-    def add_edge(self, first_v, second_v, weight):
-        self.kf_graph[first_v][second_v] = weight
-
-    # -----------------------------
+        self.shortest_path = ex7_Objects.shortest_path_generator()
+        self.loops = []
+        self.camera_symbols = []
+        self.cace_initial_estimate_before_loop_closure = gtsam.Values()
+        self.initial_estimate = gtsam.Values()
+        self.build_factor_graph()
 
     @staticmethod
     def get_bundle_relative_covariance_and_poses(bundle):
@@ -110,6 +103,9 @@ class PoseGraph:
         self.optimizer = gtsam.LevenbergMarquardtOptimizer(self.graph, self.initial_estimate)
         self.optimized_values = self.optimizer.optimize()
 
+    def get_initial_estimate(self):
+        return self.initial_estimate
+
     def get_optimized_graph_error(self):
         return self.graph.error(self.optimized_values)
 
@@ -119,59 +115,90 @@ class PoseGraph:
     def get_marginals(self):
         return gtsam.Marginals(self.graph, self.optimized_values)
 
-    def all_loop_closure(self):
+    def all_loop_closure(self, kfs_num=None):
         import tqdm
-        for i in tqdm.tqdm(range(len(self.key_frames))):
-            self.loop_closure(i)
+        if not kfs_num:
+            kfs_num = len(self.key_frames)
+        for i in tqdm.tqdm(range(kfs_num - 1)):
+            self.single_loop_closure(i)
 
-    def loop_closure(self, cur_kf):
-        # mahalanobis_distance
-        mahalanobis_similarity = self.mahalanobis_distance(cur_kf)
+    def single_loop_closure(self, cur_kf):
+        loop_constrain = self.get_consensus_frame_track(cur_kf)
+        if loop_constrain:
+            self.add_loop_factors(loop_constrain, cur_kf)
+            self.optimize()
+        return loop_constrain
+
+    def add_loop_factors(self, loop_prev_frames_tracks_tuples, cur_frame):
+        cur_frame_sym = symbol('c', cur_frame)
+        cur_frame_movie_ind = self.key_frames[cur_frame][0]
+        cur_frame_loop = []
+        self.create_and_add_factors(cur_frame_loop, cur_frame_movie_ind, cur_frame_sym, loop_prev_frames_tracks_tuples)
+        self.loops.append([cur_frame, cur_frame_loop])
+
+    def create_and_add_factors(self, cur_frame_loop, cur_frame_movie_ind, cur_frame_sym,
+                               loop_prev_frames_tracks_tuples):
+        for prev_frame, tracks in loop_prev_frames_tracks_tuples:
+            cur_frame_loop.append(prev_frame)
+
+            prev_frame_movie_ind = self.key_frames[prev_frame][0]
+            rel_pose, rel_last_cam_cov_mat = kf_bundle.compute_rel_pose_with_bundle(prev_frame_movie_ind,
+                                                                                    cur_frame_movie_ind, tracks)
+            prev_frame_sym = symbol('c', prev_frame)
+            noise_model = gtsam.noiseModel.Gaussian.Covariance(rel_last_cam_cov_mat)
+            factor = gtsam.BetweenFactorPose3(prev_frame_sym, cur_frame_sym, rel_pose, noise_model)
+            self.graph.add(factor)
+
+    def get_consensus_frame_track(self, cur_kf):
+        mahalanobis_similarity = self.get_similiar_kf_bymahalanobis_distance(cur_kf)
         similar_kf_after_consensus_match = []
 
-        # if mahalanobis_similarity:
-        #     frame_ind = np.array(self.key_frames)[cur_kf]  # frame index of the keyframe index
-        #     similar_kf_after_consensus_match = find_loop_candidate_by_consensus_match(
-        #         mahalanobis_dist_cand_at_movie_ind,
-        #         mahalanobis_dist_cand_at_pg_ind,
-        #         cur_frame_movie_ind,
-        #         INLIERS_THRESHOLD_PERC)
-        # return similar_kf_after_consensus_match
+        if len(mahalanobis_similarity) > 0:
+            similar_kf_after_consensus_match = self.heavy_operation(cur_kf, mahalanobis_similarity,
+                                                                    similar_kf_after_consensus_match)
 
+        return similar_kf_after_consensus_match
 
-    def mahalanobis_distance(self, cur_kf_ind):
-        # mahalanobis_dist = lambda delta, cov : (delta.T @ np.linalg.inv(cov) @ delta)** 0.5
-        def mahalanobis_dist(delta, cov):
+    def heavy_operation(self, cur_kf, mahalanobis_similarity):
+        # todo check the [0] of both tuples
+        cur_frame_ind = self.key_frames[cur_kf][0]
+        mahalanobis_dist_cand_frame_ind = np.array(self.key_frames)[mahalanobis_similarity][:,
+                                          0]
+        similar_kf_after_consensus_match = \
+            utilities.heavy_operation(mahalanobis_dist_cand_frame_ind,
+                                      mahalanobis_similarity,
+                                      cur_frame_ind,
+                                      70)
+        return similar_kf_after_consensus_match
+
+    def get_similiar_kf_bymahalanobis_distance(self, cur_kf_ind):
+        def get_mahalanobis_dist(delta, cov):
             r_squared = delta.T @ np.linalg.inv(cov) @ delta
             return r_squared ** 0.5
 
         similar_kf = []
         cur_kf_mat = self.initial_estimate.atPose3(symbol('c', cur_kf_ind))
-        for prev_kf_ind in range(cur_kf_ind):
-            # get shortest path:
-            shortest_path = self.kf_graph.find_shortest_path(prev_kf_ind, cur_kf_ind)
-            # get sum of relative covariance matrices between prev and cur kf:
-            estimated_relative_cov = self.get_estimated_relative_cov(shortest_path)
-
-            # get transformation between prev and cur kfs:
-            prev_kf_mat = self.initial_estimate.atPose3(symbol('c', prev_kf_ind))
-
-            cams_delta = utilities.gtsam_cams_delta(prev_kf_mat, cur_kf_mat)
-            # get mahalanobis distance
-            mahalanobis_dist = mahalanobis_dist(cams_delta, estimated_relative_cov)
-
-            # check for threshold:
-            if mahalanobis_dist < 100:
-                similar_kf.append([mahalanobis_dist, prev_kf_ind])
-        # sort, and take the 3 most similar
+        self.searche_closure_in_pre_kf(cur_kf_ind, cur_kf_mat, get_mahalanobis_dist, similar_kf)
         if len(similar_kf) > 0:
             similar_kf.sort(key=lambda x: x[0])
             similar_kf = np.array(similar_kf[:3]).astype(int)[:, 1]
         return similar_kf
 
+    def searche_closure_in_pre_kf(self, cur_kf_ind, cur_kf_mat, get_mahalanobis_dist, similar_kf):
+        for prev_kf_ind in range(cur_kf_ind):
+            shortest_path = self.shortest_path.find_shortest_path(prev_kf_ind, cur_kf_ind)
+            estimated_relative_cov = self.get_estimated_relative_cov(shortest_path)
+
+            prev_kf_mat = self.initial_estimate.atPose3(symbol('c', prev_kf_ind))
+            cams_delta = utilities.gtsam_cams_delta(prev_kf_mat, cur_kf_mat)
+
+            mahalanobis_dist = get_mahalanobis_dist(cams_delta, estimated_relative_cov)
+            if mahalanobis_dist < 70:
+                similar_kf.append([mahalanobis_dist, prev_kf_ind])
+
     def get_estimated_relative_cov(self, shortest_path):
         estimated_relative_cov = np.zeros((6, 6))
         for i in range(1, len(shortest_path)):
-            edge = self.kf_graph.get_edge_between_vertices(shortest_path[i - 1], shortest_path[i])
+            edge = self.shortest_path.get_edge_between_vertices(shortest_path[i - 1], shortest_path[i])
             estimated_relative_cov += edge.get_cov()
         return estimated_relative_cov
