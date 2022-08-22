@@ -31,14 +31,13 @@ class PoseGraph:
         first_key_frame, second_key_frame = bundle.keyframe1, bundle.keyframe2
         marginals = bundle.get_marginals()
 
-        # compute the covariance of the last key frame pose in relate to first key frame
         keys = gtsam.KeyVector()
         keys.append(symbol('c', first_key_frame))
         keys.append(symbol('c', second_key_frame))
         information_mat_first_second = marginals.jointMarginalInformation(keys).at(keys[-1], keys[-1])
         cond_cov_mat = np.linalg.inv(information_mat_first_second)
 
-        # compute relative pose
+        # get relative pose
         first_camera_pose = bundle.optimized_values.atPose3(symbol('c', first_key_frame))
         second_camera_pose = bundle.optimized_values.atPose3(symbol('c', second_key_frame))
         relative_pose = first_camera_pose.between(second_camera_pose)
@@ -99,7 +98,6 @@ class PoseGraph:
         return gtsam.Marginals(self.graph, self.optimized_values)
 
     def all_loop_closure(self, kfs_num=None):
-        import tqdm
         if not kfs_num:
             kfs_num = len(self.key_frames)
         for i in range(kfs_num - 1):
