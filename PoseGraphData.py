@@ -28,23 +28,17 @@ class PoseGraph:
 
     @staticmethod
     def get_bundle_relative_covariance_and_poses(bundle):
-        """
-        Computes relative poses between key frame and their relative covariance matrix for one bundle
-        :return: Relative pose and covariance matrix
-        """
-        # Compute bundle marginals
         first_key_frame, second_key_frame = bundle.keyframe1, bundle.keyframe2
         marginals = bundle.get_marginals()
 
-        # Apply marginalization and conditioning to compute the covariance of the last key frame pose
-        # in relate to first key frame
+        # compute the covariance of the last key frame pose in relate to first key frame
         keys = gtsam.KeyVector()
         keys.append(symbol('c', first_key_frame))
         keys.append(symbol('c', second_key_frame))
         information_mat_first_second = marginals.jointMarginalInformation(keys).at(keys[-1], keys[-1])
         cond_cov_mat = np.linalg.inv(information_mat_first_second)
 
-        # Compute relative pose
+        # compute relative pose
         first_camera_pose = bundle.optimized_values.atPose3(symbol('c', first_key_frame))
         second_camera_pose = bundle.optimized_values.atPose3(symbol('c', second_key_frame))
         relative_pose = first_camera_pose.between(second_camera_pose)
@@ -53,51 +47,40 @@ class PoseGraph:
 
     @staticmethod
     def get_all_relative_covariance_and_poses(bundles):
-        """
-        this Method return the relative poses and covariance matrices lists o
-        """
-        import tqdm
         rel_poses_lst, cov_mat_lst = [], []
-
-        for i in tqdm.tqdm(range(len(bundles))):
+        for i in range(len(bundles)):
             relative_pose, cond_cov_mat = PoseGraph.get_bundle_relative_covariance_and_poses(bundles[i])
-
             cov_mat_lst.append(cond_cov_mat)
             rel_poses_lst.append(relative_pose)
 
         return cov_mat_lst, rel_poses_lst
 
     def build_factor_graph(self):
-        # Create first camera symbol
         gtsam_cur_global_pose = gtsam.Pose3()
-        first_left_cam_sym = symbol('c', self.key_frames[0][0])
+        first_left_cam_symbol = symbol('c', self.key_frames[0][0])
 
         self.global_pose.append(gtsam_cur_global_pose)
 
         pose_uncertainty = gtsam.noiseModel.Diagonal.Sigmas(
             np.array([(3 * np.pi / 180) ** 2] * 3 + [0.01, 0.001, 0.01]))
-        factor = gtsam.PriorFactorPose3(first_left_cam_sym, gtsam_cur_global_pose, pose_uncertainty)
+        factor = gtsam.PriorFactorPose3(first_left_cam_symbol, gtsam_cur_global_pose, pose_uncertainty)
         self.graph.add(factor)
 
-        self.initial_estimate.insert(first_left_cam_sym, gtsam_cur_global_pose)
+        self.initial_estimate.insert(first_left_cam_symbol, gtsam_cur_global_pose)
 
-        prev_sym = first_left_cam_sym
-
-        # Create factor for each pose and add it to the graph
+        previous_symbol = first_left_cam_symbol
         for i in range(len(self.rel_poses) - 1):
             cur_sym = symbol('c', self.key_frames[i + 1][0])
             gtsam_cur_global_pose = gtsam_cur_global_pose.compose(self.rel_poses[i])
             self.global_pose.append(gtsam_cur_global_pose)
 
-            # Create factor
             noise_model = gtsam.noiseModel.Gaussian.Covariance(self.cov[i])
-            factor = gtsam.BetweenFactorPose3(prev_sym, cur_sym, self.rel_poses[i], noise_model)
+            factor = gtsam.BetweenFactorPose3(previous_symbol, cur_sym, self.rel_poses[i], noise_model)
             self.graph.add(factor)
 
-            # Add initial estimate
             self.initial_estimate.insert(cur_sym, gtsam_cur_global_pose)
 
-            prev_sym = cur_sym
+            previous_symbol = cur_sym
 
     def optimize(self):
         self.optimizer = gtsam.LevenbergMarquardtOptimizer(self.graph, self.initial_estimate)
@@ -119,7 +102,7 @@ class PoseGraph:
         import tqdm
         if not kfs_num:
             kfs_num = len(self.key_frames)
-        for i in tqdm.tqdm(range(kfs_num - 1)):
+        for i in range(kfs_num - 1):
             self.single_loop_closure(i)
 
     def single_loop_closure(self, cur_kf):
