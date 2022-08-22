@@ -146,7 +146,7 @@ def get_supporters_idx(p3d, pl1, left1_point, right1_point):
 
 def online_ransac(p3d, pl1, left1_point, right1_point):
     """
-    estimated left 1 online transformation matrix (outliers percentage and epsilon equals  0.99 both).
+    estimate left 1 online transformation matrix (outliers percentage and epsilon equals  0.99 both).
     :return: left 1
     """
     def initial_estimation(prob, outliers_perc):
