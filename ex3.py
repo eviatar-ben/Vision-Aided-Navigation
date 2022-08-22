@@ -121,28 +121,51 @@ def get_maximal_group(p3d, pl1, point_l1, point_r1):
     return maximum_supporters_idx
 
 
-def online_ransac(p3d, pl1, point_l1, point_r1):
+def get_supporters_idx(p3d, pl1, left1_point, right1_point):
+    """
+    :returns supporters indices using PNP and euclidean distance in order to detect supporters
+    :param p3d:
+    :param pl1:
+    :param point_l1:
+    :param point_r1:
+    :return: supporters indices
+    """
+    i = np.random.randint(len(p3d), size=4)
+    object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
+    suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
+    try:
+        Rt = rodriguez_to_mat(r, t)
+    except:
+        return None
+    ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
+    projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
+
+    # euclidean distance in order to detect supporters
+    return get_supporters(projected_l1, projected_r1, left1_point, right1_point)
+
+
+def online_ransac(p3d, pl1, left1_point, right1_point):
+    """
+    estimated left 1 online transformation matrix (outliers percentage and epsilon equals  0.99 both).
+    :return: left 1
+    """
+    def initial_estimation(prob, outliers_perc):
+        return np.log(1 - prob) / np.log(1 - np.power(1 - outliers_perc, 4))
+
     max_supporters_number, maximum_supporters_idx = -1, None
     inliers_num, outliers_num = 0, 0
     first_loop_iter = 0
-    first_loop_iter_est = lambda prob, outliers_perc: np.log(1 - prob) / np.log(
-        1 - np.power(1 - outliers_perc, 4))
-    outliers_perc, prob = 0.99, 0.99
+    outliers_percentage, prob = 0.99, 0.99
 
-    while outliers_perc != 0 and first_loop_iter < first_loop_iter_est(prob, outliers_perc):
-        i = np.random.randint(len(p3d), size=4)
-        object_points, image_points = p3d[i], cv2.KeyPoint_convert(pl1[i])
-        suc, r, t = cv2.solvePnP(object_points, image_points, cameraMatrix=k, distCoeffs=None, flags=cv2.SOLVEPNP_AP3P)
-        try:
-            Rt = rodriguez_to_mat(r, t)
-        except:
+    still_optimized = lambda outliers_percentage, first_loop_iter: \
+        outliers_percentage != 0 and first_loop_iter < initial_estimation(prob, outliers_percentage)
+
+    while still_optimized(outliers_percentage, first_loop_iter):
+        supporters_idx = get_supporters_idx(p3d, pl1, left1_point, right1_point)
+
+        if supporters_idx is None:
             continue
-        ext_l0, ext_r0, ext_l1, ext_r1 = calc_mat(Rt)
-        projected_l1, projected_r1 = projection(ext_l1, ext_r1, transform3dp(p3d))
-
-        supporters_idx = get_supporters(projected_l1, projected_r1, point_l1, point_r1)
         num_supp = len(supporters_idx[0])
-
         if len(supporters_idx[0]) > max_supporters_number:
             max_supporters_number = len(supporters_idx[0])
             maximum_supporters_idx = supporters_idx
@@ -151,7 +174,7 @@ def online_ransac(p3d, pl1, point_l1, point_r1):
 
         outliers_num += len(p3d) - num_supp
         inliers_num += num_supp
-        outliers_perc = min(outliers_num / (inliers_num + outliers_num), 0.99)
+        outliers_percentage = min(outliers_num / (inliers_num + outliers_num), 0.99)
     return maximum_supporters_idx
 
 
@@ -236,7 +259,6 @@ def get_l0_kp_in_frame(supporters_idx, mutual_matches_ind_l1, mutual_matches_ind
 
 
 def play(stop, pickling=True):
-
     import tqdm
     def compute_rts():
         for i in tqdm.tqdm(range(0, stop - 1)):
