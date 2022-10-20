@@ -55,12 +55,13 @@ With regards to the Triangulation, the system rejects 3D points with negative z-
 
 Using those algorithms to reject outliers, the system accumulated the sequences' transformations between each two frames – using the PNP algorithm and the following lemma:
 
-* *Given the location of the camera as v = [x, y, z]T , [R| t] [x, y, z]T will yield the zero vector (since the camera position in the camera world is considered to be    the  system origin).
-   Meaning, R v +t = 0   ->
-            R v = -t  ->
-            R-1Rv = R-1 -t  ->
-            v = R-1-t   -> (since R is orthonormal)
-            v = RT-t  = -RT t.
+* Given the location of the camera as v = [x, y, z]T , [R| t] [x, y, z]T will yield the zero vector (since the camera position in the camera world is considered to be   the  system origin).
+  Meaning, 	
+  R v +t = 0   ->
+  R v = -t  ->
+  R-1Rv = R-1 -t  ->
+  v = R-1-t   -> (since R is orthonormal)
+  v = RT-t  = -RT t.
 
 In order to implement the PNP algorithm the system accumulated the tracks along the trajectory and apply Consensus Match, RANSAC and Triangulation.
 The initial estimation with respect to the ground truth:
