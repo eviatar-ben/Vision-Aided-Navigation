@@ -40,24 +40,9 @@ For each four points, the system triangulates two of the points in the first fra
 At this phase, the system created a points cloud, and using the PNP procedure (in order to get the matrix [R |t] ) the RANSAC algorithm emits the best [R |t] matrix .
 
 E.g.:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+![3](https://user-images.githubusercontent.com/82065601/196912422-a54bf1f3-f911-4980-9b42-ee722c7d26d6.png)
+![4](https://user-images.githubusercontent.com/82065601/196912515-5c3bbdf8-c1af-4ef9-bb0a-6424ec7601df.png)
+ ![5](https://user-images.githubusercontent.com/82065601/196912540-068448e3-d61f-495a-af46-d1369be8e7bb.png)
 
 
 In the first phase the system performs Features matching using AKAZE algorithm with NORM_HAMMING (Those algorithm and norm were chosen after a trial-and-error (mostly ill-posed error) process and consultation with the experience of other fellow course members) .
@@ -70,12 +55,12 @@ With regards to the Triangulation, the system rejects 3D points with negative z-
 
 Using those algorithms to reject outliers, the system accumulated the sequences' transformations between each two frames – using the PNP algorithm and the following lemma:
 
-o	Given the location of the camera as v = [x, y, z]T , [R| t] [x, y, z]T will yield the zero vector (since the camera position in the camera world is considered to be the  system origin).
-Meaning, R v +t = 0   ->
-   R v = -t  ->
-   R-1Rv = R-1 -t  ->
-   v = R-1-t   -> (since R is orthonormal)
-   v = RT-t  = -RT t.
+* *Given the location of the camera as v = [x, y, z]T , [R| t] [x, y, z]T will yield the zero vector (since the camera position in the camera world is considered to be    the  system origin).
+   Meaning, R v +t = 0   ->
+            R v = -t  ->
+            R-1Rv = R-1 -t  ->
+            v = R-1-t   -> (since R is orthonormal)
+            v = RT-t  = -RT t.
 
 In order to implement the PNP algorithm the system accumulated the tracks along the trajectory and apply Consensus Match, RANSAC and Triangulation.
 The initial estimation with respect to the ground truth:
