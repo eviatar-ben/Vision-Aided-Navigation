@@ -1,5 +1,4 @@
 # Vision Aided Navigation:
-  GitHub Repository - Link
   Over the semester we implemented a system that estimates the trajectory of the vehicle from a video captured with an onboard stereo camera.
   The goal of this system is to understand the geometry of the world around us, and our position in it (Mapping and Localization).
   With high accuracy and autonomy, such technology is "life changing", a quite remarkable example would be self-driving vehicles (but not only):
@@ -13,9 +12,9 @@
   explaining why Vision Aided Navigation is highly researched area.
 
   As discussed in the lectures this technology gives an answer for many other deficient  technologies, such as GPS:
-  •	Robustness.
-  •	Independence from the presence of infrastructure.
-  •	Orientation info'.
+  *	Robustness.
+  *	Independence from the presence of infrastructure.
+  *	Orientation info'.
 
   The following plots describes the system's process from an initial estimation of the trajectory to the final estimated trajectory after optimization (Bundle Adjustment) and loop closure:
 
@@ -23,8 +22,10 @@
 
 
 
+![Initial estimation](https://user-images.githubusercontent.com/82065601/196910583-34533b7e-73ee-44e8-8ddb-0f5314618e6f.png)
 
 
+![Final estimation](https://user-images.githubusercontent.com/82065601/196910745-79491e0c-1615-4779-b8d6-69cd18f05ddf.png)
 
 
 
