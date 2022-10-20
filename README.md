@@ -32,7 +32,7 @@
 
 The system, roughly, consists of the following  stages, using a several algorithms in each stage:
 
-The trajectory's initial estimation:
+# The trajectory's initial estimation:
 Since the Bundle Adjustment algorithm- which boils down to minimizing the projection error between the image locations of observed image points using nonlinear least-squares algorithm, the system is required for an initial estimation which supplied by the following approach:
 
 The system match fours of points, between each sequence of two frames (two stereo pictures).
@@ -42,7 +42,7 @@ At this phase, the system created a points cloud, and using the PNP procedure (i
 E.g.:
 ![3](https://user-images.githubusercontent.com/82065601/196912422-a54bf1f3-f911-4980-9b42-ee722c7d26d6.png)
 ![4](https://user-images.githubusercontent.com/82065601/196912515-5c3bbdf8-c1af-4ef9-bb0a-6424ec7601df.png)
- ![5](https://user-images.githubusercontent.com/82065601/196912540-068448e3-d61f-495a-af46-d1369be8e7bb.png)
+![5](https://user-images.githubusercontent.com/82065601/196912540-068448e3-d61f-495a-af46-d1369be8e7bb.png)
 
 
 In the first phase the system performs Features matching using AKAZE algorithm with NORM_HAMMING (Those algorithm and norm were chosen after a trial-and-error (mostly ill-posed error) process and consultation with the experience of other fellow course members) .
@@ -66,45 +66,15 @@ Using those algorithms to reject outliers, the system accumulated the sequences'
 In order to implement the PNP algorithm the system accumulated the tracks along the trajectory and apply Consensus Match, RANSAC and Triangulation.
 The initial estimation with respect to the ground truth:
 
+![6](https://user-images.githubusercontent.com/82065601/196913451-5e8aa5a3-a018-4ce8-872f-62f307163f7b.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Accumulating relevant features Database.
+# Accumulating relevant features Database.
 As mentioned, in order to apply the Bundle Adjustment algorithm the system maintained a Database of the relevant data, which one can look at as a set of tracks along the trajectory (in this part), where each track is essentially a 3D point in the "real world" (landmark) that’s appears in a sequence of frames along the trajectory.
 
 E.g. (marked with a small red dot):
 
  
+![7](https://user-images.githubusercontent.com/82065601/196913554-b5a711ec-9fa9-469d-9b36-b2f645ea997d.jpg)
 
 
 Quantitative and qualitative analysis:
@@ -115,76 +85,13 @@ Max track length:	128
 Min track length:	2
 Mean track length:	4.972
 
+![8](https://user-images.githubusercontent.com/82065601/196913608-072feec7-c083-499c-b3da-443e8a0d7979.png)
+![9](https://user-images.githubusercontent.com/82065601/196913616-f04b4adb-a91a-45f2-986f-e8df8796a953.png)
+![10](https://user-images.githubusercontent.com/82065601/196913624-c9f6f163-9a32-4acc-8a3e-f702b8e7644d.png)
+![11](https://user-images.githubusercontent.com/82065601/196913637-605dcd43-0370-4367-94d9-d7bc9c900c3f.png)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Optimizing the estimation by Bundle Adjustment optimization:
+#  Optimizing the estimation by Bundle Adjustment optimization:
 At this point the system is starting to take into account the probability and the uncertainty aspects.
 As mentioned above, since the Bundle Adjustment algorithm- which boils down to minimizing the projection error- thus, the minimization is achieved using nonlinear least-squares algorithms. Of these, Levenberg–Marquardt has proven to be one of the most successful due to its ease of implementation and the ability to converge quickly from a wide range of initial guesses.
 Worth mentioning, when solving the minimization problems arising in the framework of bundle adjustment, the normal equations have a sparse block structure owing to the lack of interaction among parameters for different 3D points and cameras. This treat exploited to gain tremendous computational benefits by employing a sparse variant of the Levenberg–Marquardt algorithm which explicitly takes advantage of the normal equations zeros pattern, avoiding storing and operating on zero-elements.
@@ -194,76 +101,22 @@ In order to adjusts each local bundle, the system create a factor graph based on
 
 The bundle adjustment optimization as shown and submitted in stage 5:
 
+![12](https://user-images.githubusercontent.com/82065601/196913887-1a201187-23aa-4549-8e74-8ee80d015ddf.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-•	As can one indicate, the Bundle Adjustment optimization were did emits an optimization but not as quite as can be expected.
+* As can one indicate, the Bundle Adjustment optimization were did emits an optimization but not as quite as can be expected.
 After extended research, and after observing that the system has a loose connectivity.
 The previous part of the system massively changed, as describe previously:
-o	The SIFT detector were replaced by AKAZE detector
-o	L2 Norm replaced by HAMMING Norm.
-o	Significance Test's ratio were reduced.
-o	Extractor.
-o	Thresholds detection for outliers.
-o	RANSAC's iteration.
+	* The SIFT detector were replaced by AKAZE detector
+	* L2 Norm replaced by HAMMING Norm.
+	* Significance Test's ratio were reduced.
+	* Extractor.
+	* Thresholds detection for outliers.
+	* RANSAC's iteration.
 As can show those changes made the following connectivity improvement:
 
+![13](https://user-images.githubusercontent.com/82065601/196914230-8bc108b2-f9bb-409b-afdc-897e8c5e367b.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+![14](https://user-images.githubusercontent.com/82065601/196914235-f5e45d39-9a1e-4f75-986d-2562033bf2c1.png)
 
 Worth mentioning:  As can show by the project's process those changes were made only after the system suffered from an "ill posed" problems at the next stages – the Bundle Adjustment Algorithm.
 
@@ -271,48 +124,7 @@ Worth mentioning:  As can show by the project's process those changes were made 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Performing Loop Closure After Creating a Pose Graph from the accumulated Data:
+# Performing Loop Closure After Creating a Pose Graph from the accumulated Data:
 Moving along, to the last stage- the loop closure:
 Essentially, loop closure is the task of deciding whether or not a vehicle has, after an excursion of arbitrary length, returned to a previously visited area.
 This detection is of vital importance in the process of simultaneous localization and mapping as it helps to reduce the cumulative error of the estimated pose and generate a consistent "global map".
@@ -325,24 +137,23 @@ Perform the heavy operations (e.g., Visual descriptor-based matching) only on su
 After finding the shortest path using the Dijkstra algorithm, the relative keyframes'  covariance is the sum of the covariances who take part in the shortest path (as mentioned in the lecture, since most of the matrices' constrained covariance contains similar values, the edge's weights were all sets to 1.)
 
 The heavy operation, that’s apply only on the suspects that passed the geometric intersection part, were implements as expected using the consensus match, such that any suspects which passed the chosen threshold (of inliers percentage and inliers amount) were added to the Pose Graph:
- 
+
+ ![15](https://user-images.githubusercontent.com/82065601/196914456-85b28b59-0d77-4127-9726-2649bb833242.png)
+
 
 This routine applied for each keyframe (for each keyframe the system searched for a loop closure in the previous keyframes).
 
 A graph of the absolute location error for the whole pose graph both with and without loop closures:
 
 
-
-
-
-
-
-
+![16](https://user-images.githubusercontent.com/82065601/196914501-4714e71f-5ef6-442a-a797-a36f42b37e60.png)
+![17](https://user-images.githubusercontent.com/82065601/196914516-6b204d79-26a0-4aa9-8f4a-f0e4d06972a5.png)
 
 
 A graph of the location uncertainty size for the whole pose graph both with and without loop closures (log scaled):
 
 
+![18](https://user-images.githubusercontent.com/82065601/196914597-8d35de4e-d6d4-4c22-b4b6-1d14508aa617.png)
 
 
 
@@ -352,24 +163,7 @@ A graph of the location uncertainty size for the whole pose graph both with and 
 Using the matrices' determinant as a measure for the uncertainty size (with and without loop closure).
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Discussion and Conclusions:
+# Discussion and Conclusions:
 We can cautiously say that our final results are quite impressive, the system managed to map and to localize the car's environment, when equipped only with two stereo cameras(!).
 Nevertheless, due to the importance of robustness and accuracy when dealing with such problems we can safely say that - there is still a lot of work to do.
 
