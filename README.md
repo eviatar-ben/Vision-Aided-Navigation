@@ -1,5 +1,4 @@
 # Vision Aided Navigation:
-  # Final Project:
   GitHub Repository - Link
   Over the semester we implemented a system that estimates the trajectory of the vehicle from a video captured with an onboard stereo camera.
   The goal of this system is to understand the geometry of the world around us, and our position in it (Mapping and Localization).
