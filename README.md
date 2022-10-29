@@ -22,7 +22,6 @@
 
 
 
-![Initial estimation](https://user-images.githubusercontent.com/82065601/196910583-34533b7e-73ee-44e8-8ddb-0f5314618e6f.png)
 
 
 <img src="[https://your-image-url.type](https://user-images.githubusercontent.com/82065601/196910583-34533b7e-73ee-44e8-8ddb-0f5314618e6f.png)" width="200" height="200">
