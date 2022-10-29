@@ -20,8 +20,7 @@
 
 
 
-
-<img src="(https://user-images.githubusercontent.com/82065601/196910583-34533b7e-73ee-44e8-8ddb-0f5314618e6f.png" width="600" height="600">
+![Initial estimation](https://gyazo.com/eb5c5741b6a9a16c692170a41a49c858.png | width=400)
 
 
 ![Initial estimation](https://user-images.githubusercontent.com/82065601/196910583-34533b7e-73ee-44e8-8ddb-0f5314618e6f.png) 
