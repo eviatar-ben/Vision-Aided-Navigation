@@ -21,8 +21,8 @@
 
 
 
-![Initial estimation](https://user-images.githubusercontent.com/82065601/196910583-34533b7e-73ee-44e8-8ddb-0f5314618e6f.png) 
-![Final estimation](https://user-images.githubusercontent.com/82065601/196910745-79491e0c-1615-4779-b8d6-69cd18f05ddf.png)
+<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/Initial%20estimation.png" width="400" height="400" />
+<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/Final%20estimation.png" width="400" height="400" />
 
 
 
