@@ -21,8 +21,7 @@
 
 
 
-<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/Initial%20estimation.png" width="400" height="400" />
-<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/Final%20estimation.png" width="400" height="400" />
+<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/Initial%20estimation.png" width="500" height="400" />  <img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/Final%20estimation.png" width="500" height="400" />
 
 
 
@@ -40,9 +39,10 @@ For each four points, the system triangulates two of the points in the first fra
 At this phase, the system created a points cloud, and using the PNP procedure (in order to get the matrix [R |t] ) the RANSAC algorithm emits the best [R |t] matrix .
 
 E.g.:
-![3](https://user-images.githubusercontent.com/82065601/196912422-a54bf1f3-f911-4980-9b42-ee722c7d26d6.png)
-![4](https://user-images.githubusercontent.com/82065601/196912515-5c3bbdf8-c1af-4ef9-bb0a-6424ec7601df.png)
-![5](https://user-images.githubusercontent.com/82065601/196912540-068448e3-d61f-495a-af46-d1369be8e7bb.png)
+<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/3.png"  />
+<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/4.png" width="500" height="450" />
+<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/5.png" width="500" height="450" />
+
 
 
 In the first phase the system performs Features matching using AKAZE algorithm with NORM_HAMMING (Those algorithm and norm were chosen after a trial-and-error (mostly ill-posed error) process and consultation with the experience of other fellow course members) .
@@ -55,18 +55,30 @@ With regards to the Triangulation, the system rejects 3D points with negative z-
 
 Using those algorithms to reject outliers, the system accumulated the sequences' transformations between each two frames – using the PNP algorithm and the following lemma:
 
-* Given the location of the camera as v = [x, y, z]T , [R| t] [x, y, z]T will yield the zero vector (since the camera position in the camera world is considered to be   the  system origin).
-  Meaning, 	
-  R v +t = 0   ->
-  R v = -t  ->
-  R-1Rv = R-1 -t  ->
-  v = R-1-t   -> (since R is orthonormal)
-  v = RT-t  = -RT t.
+* Given the location of the camera as $\vec{v} = [x, y, z]^T$:
+
+  $[R| t] \times [x, y, z]^T$ will yield the zero vector (since the camera position in the camera world is considered to be   the  system origin).
+  
+  Meaning, 
+  
+  $[R| t] \times \vec{v} = \vec{0}$  $\implies$  (homogeneous coordinates)
+  
+  $[R v] +\vec{t} = \vec{0}$   $\implies$
+  
+  $[R v] = \vec{-t}$  $\implies$
+  
+  $[R^{-1}] [R]\vec{v} = [R^{-1}]\vec{-t}$  $\implies$
+  
+  $\vec{v} =[R^{-1}]\vec{-t}$   $\implies$ (since R is orthonormal)
+  
+  $\vec{v} = [R^T]\vec{-t}  = -[R^T]\vec{t}$.
 
 In order to implement the PNP algorithm the system accumulated the tracks along the trajectory and apply Consensus Match, RANSAC and Triangulation.
 The initial estimation with respect to the ground truth:
 
-![6](https://user-images.githubusercontent.com/82065601/196913451-5e8aa5a3-a018-4ce8-872f-62f307163f7b.png)
+<p align="center">
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/6.png" width="700" height="600" />
+</p>
 
 # Accumulating relevant features Database.
 As mentioned, in order to apply the Bundle Adjustment algorithm the system maintained a Database of the relevant data, which one can look at as a set of tracks along the trajectory (in this part), where each track is essentially a 3D point in the "real world" (landmark) that’s appears in a sequence of frames along the trajectory.
@@ -85,11 +97,16 @@ Max track length:	128
 Min track length:	2
 Mean track length:	4.972
 
-![8](https://user-images.githubusercontent.com/82065601/196913608-072feec7-c083-499c-b3da-443e8a0d7979.png)
-![9](https://user-images.githubusercontent.com/82065601/196913616-f04b4adb-a91a-45f2-986f-e8df8796a953.png)
-![10](https://user-images.githubusercontent.com/82065601/196913624-c9f6f163-9a32-4acc-8a3e-f702b8e7644d.png)
-![11](https://user-images.githubusercontent.com/82065601/196913637-605dcd43-0370-4367-94d9-d7bc9c900c3f.png)
+<p align="center">
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/8.png" width="700" height="600" />
+</p>
 
+![9](https://user-images.githubusercontent.com/82065601/196913616-f04b4adb-a91a-45f2-986f-e8df8796a953.png)
+
+<p align="center">
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/10.png" width="700" height="600" />
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/11.png" width="700" height="600" />
+</p>
 
 #  Optimizing the estimation by Bundle Adjustment optimization:
 At this point the system is starting to take into account the probability and the uncertainty aspects.
@@ -100,8 +117,10 @@ Nevertheless, considering the complexity of the required computations, instead o
 In order to adjusts each local bundle, the system create a factor graph based on the Database that was build and mentioned in the previous stage.
 
 The bundle adjustment optimization as shown and submitted in stage 5:
+<p align="center">
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/12.png" width="700" height="1200" />
+</p>
 
-![12](https://user-images.githubusercontent.com/82065601/196913887-1a201187-23aa-4549-8e74-8ee80d015ddf.png)
 
 * As can one indicate, the Bundle Adjustment optimization were did emits an optimization but not as quite as can be expected.
 After extended research, and after observing that the system has a loose connectivity.
@@ -145,15 +164,17 @@ This routine applied for each keyframe (for each keyframe the system searched fo
 
 A graph of the absolute location error for the whole pose graph both with and without loop closures:
 
+<p align="center">
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/16.png" width="500" height="400" /> <img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/17.png" width="500" height="400" />
+</p>
 
-![16](https://user-images.githubusercontent.com/82065601/196914501-4714e71f-5ef6-442a-a797-a36f42b37e60.png)
-![17](https://user-images.githubusercontent.com/82065601/196914516-6b204d79-26a0-4aa9-8f4a-f0e4d06972a5.png)
 
 
 A graph of the location uncertainty size for the whole pose graph both with and without loop closures (log scaled):
 
-
-![18](https://user-images.githubusercontent.com/82065601/196914597-8d35de4e-d6d4-4c22-b4b6-1d14508aa617.png)
+<p align="center">
+	<img src="https://github.com/eviatar-ben/Vision-Aided-Navigation/blob/main/pngs/18.png" width="500" height="400" /> 
+</p>
 
 
 
