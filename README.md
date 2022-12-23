@@ -1,17 +1,9 @@
 # Vision Aided Navigation:
-  Over the semester we implemented a system that estimates the trajectory of the vehicle from a video captured with an onboard stereo camera.
+  Through the stages we implemented a system that estimates the trajectory of the vehicle from a video captured with an onboard stereo camera.
   The goal of this system is to understand the geometry of the world around us, and our position in it (Mapping and Localization).
-  With high accuracy and autonomy, such technology is "life changing", a quite remarkable example would be self-driving vehicles (but not only):
+  With high accuracy and autonomy, such technology is "life changing"
 
-  The United States Department of Transportation (USDOT) predicts that the rise of driverless cars will see the number of traffic deaths fall drastically - 90% reduction in traffic deaths.
-  Higher levels of autonomy have the potential to reduce risky and dangerous driver behaviors
-  (self-driving vehicles can help reduce driver error.).
-  Fewer accidents mean less traffic congestion, which means a drop in emissions. But this is not just due to a reduction in accidents - 60% drop in harmful emissions.
-
-  Those reason and many more, such as Assistive Robots for people with disabilities,
-  explaining why Vision Aided Navigation is highly researched area.
-
-  As discussed in the lectures this technology gives an answer for many other deficient  technologies, such as GPS:
+  This technology gives an answer for many other deficient  technologies, such as GPS:
   *	Robustness.
   *	Independence from the presence of infrastructure.
   *	Orientation info'.
