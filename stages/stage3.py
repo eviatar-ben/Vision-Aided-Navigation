@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-import stages.stage1
-import stages.stage2
+import stages.stage1 as stage1
+import stages.stage2 as stage2
 from plots import exs_plots
 import time
 import pickle
@@ -10,7 +10,7 @@ THRESH = 2
 RANDOM_FACTOR = 16
 FRAMES_NUM = 3450
 
-k, km1, km2, m1, m2 = ex2.get_camera_mat()
+k, km1, km2, m1, m2 = stage2.get_camera_mat()
 
 
 def get_mutual_kp_ind(matches00, matches11, matches01):
@@ -195,8 +195,8 @@ def transform_cloud(p3d, Rt_transpose):
 
 
 def one_shot(i):
-    l0, r0 = ex1.read_images(ex1.FIRST_IMAGE + i)
-    l1, r1 = ex1.read_images(ex1.FIRST_IMAGE + (i + 1))
+    l0, r0 = stage1.read_images(stage1.FIRST_IMAGE + i)
+    l1, r1 = stage1.read_images(stage1.FIRST_IMAGE + (i + 1))
 
     # in the sake of efficiency blurring the images
     kernel_size = 10
@@ -205,9 +205,9 @@ def one_shot(i):
     l1 = cv2.blur(l1, (kernel_size, kernel_size))
     r1 = cv2.blur(r1, (kernel_size, kernel_size))
 
-    match0, matches00p, kp_l0, kp_r0 = ex2.get_matches_stereo(l0, r0)
-    match11, matches11p, kp_l1, kp_r1 = ex2.get_matches_stereo(l1, r1)
-    matches01p, _, _ = ex1.get_significance_matches(img1=l0, img2=l1)
+    match0, matches00p, kp_l0, kp_r0 = stage2.get_matches_stereo(l0, r0)
+    match11, matches11p, kp_l1, kp_r1 = stage2.get_matches_stereo(l1, r1)
+    matches01p, _, _ = stage1.get_significance_matches(img1=l0, img2=l1)
     # match01, matches01p, _, _ = ex2.get_brute_force_matches(img1=l0, img2=l1)
     mutual_matches_ind_l0, mutual_matches_ind_l1 = get_mutual_kp_ind(matches00p, matches11p, matches01p)
 
@@ -316,18 +316,18 @@ def play(stop, pickling=True):
 
 
 def main():
-    l0, r0 = ex1.read_images(ex1.FIRST_IMAGE)
-    l1, r1 = ex1.read_images(ex1.SECOND_IMAGE)
+    l0, r0 = stage1.read_images(stage1.FIRST_IMAGE)
+    l1, r1 = stage1.read_images(stage1.SECOND_IMAGE)
 
     # 3.1:
 
-    img0_cloud, img1_cloud = ex2.get_cloud(ex2.FIRST_IMAGE), ex2.get_cloud(ex2.SECOND_IMAGE)
+    img0_cloud, img1_cloud = stage2.get_cloud(stage2.FIRST_IMAGE), stage2.get_cloud(stage2.SECOND_IMAGE)
     # exs_plots.plot_first_2_clouds(img0_cloud.T, img1_cloud.T)
 
     # 3.2:
-    match0, matches00p, kp_l0, kp_ro = ex2.get_matches_stereo(l0, r0)
-    match11, matches11p, kp_l1, kp_r1 = ex2.get_matches_stereo(l1, r1)
-    matches01p, _, _ = ex1.get_significance_matches(img1=l0, img2=l1)  # todo: change the parameter for efficiency
+    match0, matches00p, kp_l0, kp_ro = stage2.get_matches_stereo(l0, r0)
+    match11, matches11p, kp_l1, kp_r1 = stage2.get_matches_stereo(l1, r1)
+    matches01p, _, _ = stage1.get_significance_matches(img1=l0, img2=l1)  # todo: change the parameter for efficiency
     mutual_matches_ind_l0, mutual_matches_ind_l1 = get_mutual_kp_ind(matches00p, matches11p, matches01p)
     exs_plots.present_match_in_l0(kp_l0, mutual_matches_ind_l0, l0)
 

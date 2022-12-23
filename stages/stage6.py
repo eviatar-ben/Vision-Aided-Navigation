@@ -35,7 +35,7 @@ def get_first_bundle_info(db):
 
 
 def main():
-    db = ex4.build_data()
+    db = stage4.build_data()
     # 6.1:
     get_first_bundle_info(db)
     # 6.2:

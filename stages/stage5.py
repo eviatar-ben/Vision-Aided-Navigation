@@ -5,6 +5,7 @@ from plots import exs_plots
 from DataObjects.BundleData import BundleData
 import gtsam
 from gtsam import symbol
+from stages import stage4 as stage4
 
 
 # todo maybe in ex4 every track is missing the last frame
@@ -328,7 +329,7 @@ def bundle_adjustment(db, key_frames=utilities.fives):
 
 
 def main():
-    db = ex4.build_data()
+    db = stage4.build_data()
 
     # # 5.1
     # track = utilities.get_track_in_len(db, 20, False)
