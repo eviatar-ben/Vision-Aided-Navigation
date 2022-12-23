@@ -1,9 +1,8 @@
-from ex5 import *
-import utilities
+from stages.stage5 import *
+from utils import utilities
 from gtsam.utils import plot
 from gtsam import symbol
-import tqdm
-from PoseGraphData import PoseGraph
+from DataObjects.PoseGraphData import PoseGraph
 
 
 # ----------------------------------------------------6.1---------------------------------------------------------------

@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
-import ex1
-import ex2
-import exs_plots
+import stages.stage1
+import stages.stage2
+from plots import exs_plots
 import time
 import pickle
 
@@ -305,11 +305,11 @@ def play(stop, pickling=True):
             tracks_data_with_points.append([first_frame_p, second_frame_p, supporters_matches01p, inliers_per, Rt])
 
         # pickle_out = open(r"ex4_pickles\tracks_data.pickle", "wb")
-        pickle_out = open(r"ex4_pickles/tracks_data.pickle", "wb")
+        pickle_out = open(r"../ex4_pickles/tracks_data.pickle", "wb")
         pickle.dump(tracks_data_with_points, pickle_out)
         pickle_out.close()
 
-        pickle_out_transformations = open(r"ex4_pickles\global_transformations.pickle", "wb")
+        pickle_out_transformations = open(r"../ex4_pickles/global_transformations.pickle", "wb")
         pickle.dump(positions, pickle_out_transformations)
         pickle_out_transformations.close()
     return np.array(positions), tracks_data

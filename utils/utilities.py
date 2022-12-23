@@ -645,6 +645,6 @@ def get_bundles():
 
 def get_global_ext_cam():
     import pickle
-    pickle_in = open(r"ex5_pickles/global_cameras.pickle", "rb")
+    pickle_in = open(r"../ex5_pickles/global_cameras.pickle", "rb")
     global_ext_cam = pickle.load(pickle_in)
     return global_ext_cam

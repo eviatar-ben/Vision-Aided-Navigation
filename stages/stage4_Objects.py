@@ -84,7 +84,7 @@ class DataBase:
             frame.inliers_per = inliers_per
 
     def update_cameras(self):
-        pickle_in = open(r'ex5_pickles/global_cameras.pickle', "rb")
+        pickle_in = open(r'../ex5_pickles/global_cameras.pickle', "rb")
         global_cameras = pickle.load(pickle_in)
         for frame, global_camera in enumerate(global_cameras):
             self.frames[frame].global_extrinsic_mat = global_camera

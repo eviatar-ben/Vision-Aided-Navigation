@@ -1,7 +1,5 @@
 from ex4_Objects import *
-import ex3
-import exs_plots
-import utilities
+from utils import utilities
 import pickle
 import cv2
 import numpy as np
@@ -33,7 +31,7 @@ def get_tracks_data(data_pickled_already):
         # tracks data consists kp - converts to xy points for the sake of uniformity
         tracks_data = convert_data_kp_to_xy_point(tracks_data)
     else:
-        pickle_in = open(r"ex4_pickles/tracks_data.pickle", "rb")
+        pickle_in = open(r"../ex4_pickles/tracks_data.pickle", "rb")
 
         tracks_data = pickle.load(pickle_in)
     return tracks_data

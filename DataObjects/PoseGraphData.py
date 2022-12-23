@@ -3,7 +3,7 @@ from gtsam import symbol
 import numpy as np
 
 import ex7_Objects
-import utilities
+from utils import utilities
 
 
 class PoseGraph:

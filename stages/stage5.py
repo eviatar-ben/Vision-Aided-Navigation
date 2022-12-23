@@ -1,12 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import ex4
-import utilities
-import exs_plots
-from BundleData import BundleData
+from utils import utilities
+from plots import exs_plots
+from DataObjects.BundleData import BundleData
 import gtsam
 from gtsam import symbol
-from gtsam.utils.plot import plot_trajectory, set_axes_equal
 
 
 # todo maybe in ex4 every track is missing the last frame
